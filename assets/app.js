@@ -327,7 +327,7 @@ function renderHome(main) {
 
   const paths = esc(PROJ.rag.path.split('\\').pop()) + ' · ' + esc(PROJ.agent.path.split('\\').pop()) + ' · ' + esc(PROJ.nlink.path.split('\\').pop());
 
-  main.innerHTML = '<div class="fade-in">' +
+  main.innerHTML = '<div class="fade-in"><div class="content-col home-wrap">' +
     '<div class="hero">' +
     '<div class="mono-tag">个人学习手册 · PRIVATE STUDY NOTES</div>' +
     '<div class="hero-title">三个项目已经上线了，<span class="accent">背后的技术</span>，现在亲手补上。</div>' +
@@ -354,7 +354,7 @@ function renderHome(main) {
     secH('开源学习地图', '每个技术方向都有一流的开源代码可以读') + osMap +
     '<div class="foot">基于本地三个项目源码（<span class="mono">' + paths + '</span>）与三份面试文档生成。<br>' +
     '学习进度保存在本机浏览器 · 按 <kbd>/</kbd> 全站搜索 · 纯静态页面，可离线使用，可直接打印。</div>' +
-    '</div>';
+    '</div></div>';
 
   main.querySelectorAll('.toc-row').forEach(el => {
     const go = () => { location.hash = el.getAttribute('data-href'); };

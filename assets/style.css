@@ -52,8 +52,8 @@ kbd{font-family:var(--mono);font-size:10.5px;background:var(--panel);border:1px 
 
 /* ================= 骨架 ================= */
 .shell{display:flex;min-height:100vh}
-.main{flex:1;min-width:0;padding:44px 52px 110px;max-width:1200px}
-.content-col{max-width:760px}
+.main{flex:1;min-width:0;padding:44px clamp(20px,3vw,56px) 110px;max-width:1560px;margin-inline:auto}
+.content-col{max-width:760px;margin-inline:auto}
 
 /* ================= 侧边栏 ================= */
 .sidebar{width:280px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--line);
@@ -196,7 +196,7 @@ h1.page-title{font-family:var(--serif);font-size:31px;font-weight:900;letter-spa
 .codeblock .explain{padding:11px 16px;font-size:12.5px;color:#c8bda8;border-top:1px dashed #4a4238;background:#282320}
 
 /* ================= 开源参考 ================= */
-.refs{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin:16px 0;max-width:1000px}
+.refs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:10px;margin:16px 0;max-width:1000px}
 .ref-card{display:block;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
   padding:14px 16px;transition:border var(--t-fast),transform var(--t-fast) var(--ease-out),box-shadow var(--t-fast)}
 .ref-card:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:0 6px 16px rgba(58,42,18,.1)}
@@ -279,7 +279,7 @@ h1.page-title{font-family:var(--serif);font-size:31px;font-weight:900;letter-spa
 .stack-table td:first-child{width:280px;color:var(--tx);font-weight:600;padding-right:24px}
 @media(max-width:720px){.stack-table td:first-child{width:auto;display:block;padding:0 0 2px}.stack-table td{display:block;width:auto}}
 
-.stat-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:14px 0;max-width:1000px}
+.stat-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(190px,100%),1fr));gap:10px;margin:14px 0;max-width:1000px}
 .stat-tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);padding:15px 18px;
   transition:border var(--t-fast),box-shadow var(--t-fast)}
 .stat-tile:hover{border-color:var(--pc);box-shadow:0 3px 12px rgba(58,42,18,.08)}
@@ -323,7 +323,7 @@ h1.page-title{font-family:var(--serif);font-size:31px;font-weight:900;letter-spa
 .quiz-score .big{font-family:var(--serif);font-size:36px;font-weight:900;color:var(--acc-deep)}
 
 /* ================= 面试实战 ================= */
-.flip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(222px,1fr));gap:10px;margin:16px 0;max-width:1000px}
+.flip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(222px,100%),1fr));gap:10px;margin:16px 0;max-width:1000px}
 .flip{perspective:900px;height:128px;cursor:pointer;border-radius:var(--r-md);text-align:left}
 .flip-inner{position:relative;width:100%;height:100%;transition:transform .5s var(--ease-out);transform-style:preserve-3d}
 .flip.flipped .flip-inner{transform:rotateY(180deg)}
@@ -429,14 +429,14 @@ h1.page-title{font-family:var(--serif);font-size:31px;font-weight:900;letter-spa
 .bo-log{font-size:12px;color:var(--tx2);min-height:22px;font-family:var(--mono);margin-bottom:14px}
 
 /* ================= 本页目录（Fumadocs/Astro Docs 式） ================= */
-.lesson-grid{display:grid;grid-template-columns:minmax(0,760px) 230px;gap:44px;align-items:start}
+.lesson-grid{display:grid;grid-template-columns:minmax(0,760px) 230px;gap:44px;align-items:start;max-width:1034px;margin-inline:auto}
 .toc-rail{position:sticky;top:36px;display:flex;flex-direction:column;gap:2px;padding-top:6px}
 .toc-rail-label{font-size:11.5px;color:var(--tx3);margin-bottom:8px;letter-spacing:.1em}
 .toc-link{font-size:12.5px;color:var(--tx3);padding:4px 0 4px 14px;border-left:1.5px solid var(--line2);
   transition:all var(--t-fast);line-height:1.5;display:block}
 .toc-link:hover{color:var(--tx)}
 .toc-link.active{color:var(--acc-deep);border-left-color:var(--acc);font-weight:600}
-@media(max-width:1180px){.lesson-grid{grid-template-columns:1fr}.toc-rail{display:none}}
+@media(max-width:1180px){.lesson-grid{grid-template-columns:minmax(0,1fr)}.toc-rail{display:none}}
 
 /* ================= 入场动效 ================= */
 .fade-in{animation:fade .4s var(--ease-out)}
@@ -449,7 +449,7 @@ h1.page-title{font-family:var(--serif);font-size:31px;font-weight:900;letter-spa
 @media(prefers-reduced-motion:reduce){.stagger>*{animation:none}}
 
 /* ================= 专项：知识卡片 / 实战题 / 校验 ================= */
-.kcard-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin:14px 0;max-width:1000px}
+.kcard-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr));gap:12px;margin:14px 0;max-width:1000px}
 .kcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);padding:16px 18px}
 .kcard h4{font-family:var(--serif);font-size:14.5px;font-weight:700;margin-bottom:9px;display:flex;gap:9px;align-items:baseline}
 .kcard h4 .kn{font-family:var(--mono);font-size:10px;color:var(--acc);flex-shrink:0}
@@ -562,7 +562,7 @@ h1.page-title{font-family:var(--serif);font-size:31px;font-weight:900;letter-spa
 }
 
 /* ================= 面试速通：左侧本页目录 ================= */
-.iv-grid{display:grid;grid-template-columns:196px minmax(0,1fr);gap:34px;align-items:start}
+.iv-grid{display:grid;grid-template-columns:200px minmax(0,1fr);gap:40px;align-items:start;max-width:1280px;margin-inline:auto}
 .iv-grid>.content-col{min-width:0}
 .iv-toc{position:sticky;top:36px;display:flex;flex-direction:column;gap:2px;padding-top:6px}
 .nav-grp{margin:2px 0 6px}
@@ -571,7 +571,8 @@ h1.page-title{font-family:var(--serif);font-size:31px;font-weight:900;letter-spa
 .nav-grp .nav-item{padding-left:22px;font-size:12.5px}
 
 /* ================= 图解：放大显示 ================= */
-.iv-fig-grid{display:grid;grid-template-columns:1fr;gap:16px;margin:14px 0;max-width:920px}
+.iv-fig-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;margin:14px 0;max-width:920px}
+.iv-fig,.iv-shot,.iv-shot img{min-width:0;max-width:100%}
 .iv-fig{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;margin:0}
 .iv-shot{display:block;position:relative;width:100%;padding:0;background:#fff;
   border:none;border-bottom:1px solid var(--line);cursor:zoom-in;overflow:hidden}
@@ -627,3 +628,10 @@ body.lb-open{overflow:hidden}
   .iv-grid{grid-template-columns:minmax(0,1fr)}
   .iv-toc{display:none}
 }
+
+/* 宽屏适配：总览页内容容器 */
+.home-wrap{max-width:1120px}
+
+/* 网格内的内容列必须恢复拉伸：auto margin 会让 grid item 改按 max-content 取宽，
+   配合 max-width:none 会把窄屏轨道撑破（这是 1fr 溢出的真正根源之一） */
+.lesson-grid>.content-col,.iv-grid>.content-col{margin-inline:0}
