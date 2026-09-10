@@ -1,0 +1,8 @@
+# 构建中间产物（含未删减原文转录，不进仓库）
+.build/
+# WorkBuddy 工作区数据
+.workbuddy/
+# 本地临时文件
+*.log
+.DS_Store
+Thumbs.db
