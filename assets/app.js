@@ -373,7 +373,7 @@ function renderProjOverview(main, pid) {
   const links = (p.repo ? ' · <a href="' + p.repo + '" target="_blank" rel="noopener">GitHub 仓库</a>' : '') +
     (p.live ? ' · <a href="' + p.live + '" target="_blank" rel="noopener">在线访问</a>' : '');
 
-  main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:900px">' +
+  main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:1080px">' +
     crumbHTML([{ t: '学习总览', href: '#/' }, { t: p.name }]) +
     '<h1 class="page-title" style="color:' + p.colorHex + '">' + esc(p.name) + '</h1>' +
     '<div class="chips"><span>' + esc(p.en) + '</span><span>·</span>' + p.tags.map(t => '<span>' + esc(t) + '</span>').join(' <span>·</span> ') + '</div>' +
@@ -572,7 +572,7 @@ function renderInterview(main) {
   const introHTML = '<div class="card"><p style="font-size:14.5px;line-height:2.1;max-width:44em">' + GEN.intro30 + '</p>' +
     '<ul style="margin-top:14px;max-width:44em">' + notes + '</ul></div>';
 
-  main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:860px">' +
+  main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:1040px">' +
     crumbHTML([{ t: '学习总览', href: '#/' }, { t: '面试实战' }]) +
     '<h1 class="page-title">面试实战</h1>' +
     '<div class="chips"><span class="chip">' + icon('flame') + qaTotal + ' 道高频题</span>' +
@@ -627,7 +627,7 @@ function renderGlossary(main) {
       '<button class="master-btn' + (done ? ' on' : '') + '" data-term="' + esc(g.t) + '" style="margin-top:10px">' + (done ? '已掌握' : '标记掌握') + '</button></div>';
   }).join('');
 
-  main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:860px">' +
+  main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:1040px">' +
     crumbHTML([{ t: '学习总览', href: '#/' }, { t: '术语速查表' }]) +
     '<h1 class="page-title">术语速查表</h1>' +
     '<div class="chips"><span class="chip">' + GEN.glossary.length + ' 个术语</span><span class="chip">' + Object.keys(store.data.termDone).length + ' 已掌握</span></div>' +
@@ -802,7 +802,7 @@ function renderAipmIndex(main) {
       '<td class="st' + (ok ? '' : ' todo') + '">' + (ok ? '已完成 ✓' : '未完成') + '</td></tr>';
   }).join('');
 
-  main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:900px">' +
+  main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:1080px">' +
     crumbHTML([{ t: '学习总览', href: '#/' }, { t: AIPM.name }]) +
     '<h1 class="page-title">' + esc(AIPM.name) + '</h1>' +
     '<div class="chips"><span class="chip">' + icon('book') + AIPM.modules.length + ' 个模块</span>' +
@@ -847,7 +847,7 @@ function renderAipmModule(main, mid) {
     ? '<a class="next" href="#/aipm/m/' + AIPM.modules[idx + 1].id + '"><span class="dir">下一模块</span>' + esc(AIPM.modules[idx + 1].title) + '</a>'
     : '<a class="next" href="#/interview"><span class="dir">专项完成？去复习</span>面试实战</a>';
 
-  main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:900px">' +
+  main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:1080px">' +
     crumbHTML([{ t: '学习总览', href: '#/' }, { t: AIPM.name, href: '#/aipm' }, { t: '模块 ' + (idx + 1) + '，共 ' + AIPM.modules.length + ' 个' }]) +
     '<h1 class="page-title">' + esc(m.title) + '</h1>' +
     '<div class="chips"><span class="chip">' + icon('book') + m.cards.length + ' 张知识卡片</span>' +
@@ -963,7 +963,7 @@ function renderIntervIndex(main) {
       '<span class="sub">' + gDone + ' / ' + ms.length + ' 模块</span></td></tr>' + rows + '</tbody></table>';
   }).join('');
 
-  main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:960px">' +
+  main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:1140px">' +
     crumbHTML([{ t: '学习总览', href: '#/' }, { t: INTERV.name }]) +
     '<h1 class="page-title">' + esc(INTERV.name) + '</h1>' +
     '<div class="chips"><span class="chip">' + icon('book') + INTERV.modules.length + ' 个模块</span>' +
