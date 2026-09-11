@@ -30,6 +30,7 @@ const ICONS = {
   x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
   zoom: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/>',
   expand: '<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>',
+  list: '<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/>',
 };
 const icon = (n, cls) => '<svg class="ic' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[n] + '</svg>';
 
@@ -437,9 +438,8 @@ function renderModule(main, pid, mid) {
 
   main.innerHTML = '<div class="fade-in">' +
     '<div class="read-progress" id="readProgress"></div>' +
-    '<div class="lesson-grid"><div class="content-col">' + contentHTML + '</div>' +
-    '<aside class="toc-rail" aria-label="本页目录"><div class="toc-rail-label">本 页 目 录</div>' + tocItems + '</aside>' +
-    '</div></div>';
+    '<div class="content-col">' + contentHTML + '</div>' +
+    '</div>' + tocPanelHTML(tocItems);
 
   $('#learnBtn').addEventListener('click', () => {
     if (store.data.learned[m.id]) delete store.data.learned[m.id];
@@ -447,6 +447,7 @@ function renderModule(main, pid, mid) {
     store.save(); renderModule(main, pid, mid);
   });
   bindCopies(main);
+  bindTocPanel(main);
   if (m.demo === 'tfidf') initTfidfDemo(main);
   if (m.demo === 'backoff') initBackoffDemo(main);
 
@@ -919,6 +920,72 @@ function closeLightbox() {
   const img = lbEl.querySelector('#lbImg');
   if (img) img.removeAttribute('src');
 }
+/* ---------- 本页目录：停靠在侧边栏右侧留白区的悬浮面板 ---------- */
+const TOC_W = 176;
+function tocPanelHTML(links) {
+  return '<button class="toc-fab" id="tocFab" type="button" aria-expanded="false" aria-controls="tocPanel" title="展开 / 收起本页目录">' +
+    icon('list') + '<span>目录</span></button>' +
+    '<div class="toc-backdrop" id="tocBackdrop" hidden></div>' +
+    '<aside class="toc-panel" id="tocPanel" hidden aria-label="本页目录">' +
+    '<div class="toc-panel-head"><span class="toc-panel-label">本 页 目 录</span>' +
+    '<button class="toc-close" id="tocClose" type="button" aria-label="收起目录">' + icon('x') + '</button></div>' +
+    links + '</aside>';
+}
+function tocGeom() {
+  const sb = document.getElementById('sidebar');
+  const content = document.querySelector('#main .content-col');
+  if (!sb || !content) return null;
+  const sbR = Math.max(sb.getBoundingClientRect().right, 0);
+  const cL = content.getBoundingClientRect().left;
+  return { sbR: sbR, gutter: cL - sbR };
+}
+function positionTocPanel() {
+  const panel = document.getElementById('tocPanel');
+  const fab = document.getElementById('tocFab');
+  const bd = document.getElementById('tocBackdrop');
+  if (!panel || panel.hidden || !fab) return;
+  const g = tocGeom(); if (!g) return;
+  
+  const dockX = g.sbR + Math.max(14, (g.gutter - TOC_W) / 2);
+  const overlay = g.gutter < TOC_W + 30;
+  fab.style.left = dockX + 'px';
+  panel.style.left = dockX + 'px';
+  panel.classList.toggle('overlay', overlay);
+  if (bd) bd.hidden = !overlay;
+}
+function setTocOpen(open) {
+  const panel = document.getElementById('tocPanel');
+  const fab = document.getElementById('tocFab');
+  const bd = document.getElementById('tocBackdrop');
+  if (!panel || !fab) return;
+  fab.setAttribute('aria-expanded', open ? 'true' : 'false');
+  fab.classList.toggle('on', open);
+  if (open) { panel.hidden = false; positionTocPanel(); }
+  else { panel.hidden = true; if (bd) bd.hidden = true; }
+}
+function bindTocPanel(main) {
+  const fab = document.getElementById('tocFab');
+  const panel = document.getElementById('tocPanel');
+  const bd = document.getElementById('tocBackdrop');
+  if (!fab || !panel) return;
+  fab.addEventListener('click', () => setTocOpen(panel.hidden));
+  const closeBtn = document.getElementById('tocClose');
+  if (closeBtn) closeBtn.addEventListener('click', () => setTocOpen(false));
+  if (bd) bd.addEventListener('click', () => setTocOpen(false));
+  panel.addEventListener('click', e => {
+    if (e.target.closest('.toc-link') && panel.classList.contains('overlay')) setTocOpen(false);
+  });
+  /* 宽屏默认展开（停靠在留白区）；留白不够宽时默认收起，点按钮临时浮出 */
+  const g = tocGeom();
+  setTocOpen(!!g && g.gutter >= TOC_W + 30);
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.querySelector('.toc-panel:not([hidden])')) setTocOpen(false);
+});
+window.addEventListener('resize', () => {
+  if (document.querySelector('.toc-panel:not([hidden])')) positionTocPanel();
+});
+
 /* 宽表格包一层横向滚动容器，避免窄屏把整页撑宽 */
 function wrapTables(root) {
   root.querySelectorAll('.ktable').forEach(t => {
@@ -1043,9 +1110,7 @@ function renderIntervModule(main, mid) {
     '<a class="toc-link" data-toc="' + s[0] + '" href="#' + s[0] + '">' + esc(s[1]) + '</a>').join('');
 
   main.innerHTML = '<div class="fade-in">' +
-    '<div class="iv-grid">' +
-    '<aside class="iv-toc" aria-label="本页目录"><div class="toc-rail-label">本 页 目 录</div>' + tocHTML + '</aside>' +
-    '<div class="content-col" style="max-width:none">' +
+    '<div class="content-col iv-content">' +
     crumbHTML([{ t: '学习总览', href: '#/' }, { t: INTERV.name, href: '#/interv' }, { t: g.name }]) +
     '<h1 class="page-title">' + esc(m.title) + '</h1>' +
     '<div class="chips"><span class="chip">' + m.id.slice(3) + ' / ' + INTERV.modules.length + '</span>' + lvlHTML(m.lvl) +
@@ -1068,7 +1133,7 @@ function renderIntervModule(main, mid) {
     '<div class="quiz-score" id="scoreBox" style="display:none" aria-live="polite"></div>' +
     '<div class="stagger">' + quizHTML + '</div></div>' +
     '<div class="mod-nav">' + prev + next + '</div>' +
-    '</div></div></div>';
+    '</div></div>' + tocPanelHTML(tocHTML);
 
   $('#ivLearnBtn').addEventListener('click', () => {
     if (store.data.learned[m.id]) delete store.data.learned[m.id];
@@ -1108,6 +1173,7 @@ function renderIntervModule(main, mid) {
   }
 
   wrapTables(main);
+  bindTocPanel(main);
   bindLightbox(main);
 
   const answered = {};
