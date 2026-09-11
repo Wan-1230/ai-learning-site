@@ -510,7 +510,8 @@ h1.page-title{font-family:var(--serif);font-size:31px;font-weight:900;letter-spa
 .must{border:1px solid rgba(180,69,31,.32);background:rgba(180,69,31,.055);
   border-radius:var(--r-md);padding:18px 22px 14px;margin:14px 0 6px;max-width:1240px}
 .must h5{font-family:var(--serif);font-size:13.5px;font-weight:700;color:var(--acc-deep);margin-bottom:10px;letter-spacing:.02em}
-.must ol{list-style:none;counter-reset:must}
+.must{counter-reset:must}
+.must ol{list-style:none}
 .must li{counter-increment:must;position:relative;padding-left:32px;margin:9px 0;
   font-size:14px;color:#33291d;line-height:1.82;max-width:58em}
 .must li::before{content:counter(must);position:absolute;left:0;top:5px;width:20px;height:20px;border-radius:50%;
@@ -650,3 +651,36 @@ body.lb-open{overflow:hidden}
 .iv-content{max-width:1200px}
 @media(max-width:1279px){.toc-fab,.toc-panel,.toc-backdrop{display:none}}
 @media print{.toc-fab,.toc-panel,.toc-backdrop{display:none!important}}
+
+/* ================= 必背要点：要点与问题成对 ================= */
+.must-hint{font-size:12.5px;color:var(--tx3);margin:-4px 0 12px;line-height:1.7}
+.must-group{padding:12px 0 2px;border-top:1px dashed var(--line2)}
+.must-group:first-of-type{border-top:none;padding-top:2px}
+.must-q{display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  padding:6px 10px 6px 8px;margin:0 0 6px;border-radius:var(--r-sm);
+  border:1px solid transparent;transition:all var(--t-fast)}
+button.must-q{cursor:pointer}
+button.must-q:hover{background:rgba(180,69,31,.06);border-color:rgba(180,69,31,.24)}
+button.must-q:hover .mq-go{opacity:1;transform:translateX(0)}
+.mq-tag{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;
+  width:19px;height:19px;border-radius:4px;background:var(--acc);color:#fdfaf3;
+  font-size:10.5px;font-weight:700;font-family:var(--serif)}
+.mq-text{font-family:var(--serif);font-size:13.5px;font-weight:700;color:var(--acc-deep);
+  line-height:1.5;flex:1;min-width:0}
+.mq-src{flex-shrink:0;font-size:10.5px;color:var(--tx3);border:1px solid var(--line2);
+  border-radius:99px;padding:1px 7px;font-family:var(--mono)}
+.mq-go{flex-shrink:0;display:flex;color:var(--acc);opacity:0;transform:translateX(-4px);
+  transition:all var(--t-fast)}
+.must-q.bare{cursor:default}
+.must-q.bare .mq-tag{background:var(--tx3)}
+.must-q.bare .mq-text{color:var(--tx2);font-weight:600}
+.qa.flash{animation:qaFlash 1.8s var(--ease-out)}
+@keyframes qaFlash{
+  0%,55%{box-shadow:0 0 0 2px rgba(180,69,31,.55);border-color:var(--acc)}
+  100%{box-shadow:0 0 0 0 rgba(180,69,31,0)}
+}
+@media print{.mq-go,.must-hint{display:none}}
+
+/* 留白不足时目录按钮收成圆形图标 */
+.toc-fab.compact{padding:9px;border-radius:50%}
+.toc-fab.compact span{display:none}

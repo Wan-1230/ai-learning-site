@@ -30,6 +30,7 @@ const ICONS = {
   x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
   zoom: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/>',
   expand: '<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>',
+  'arrow-right': '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
   list: '<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/>',
 };
 const icon = (n, cls) => '<svg class="ic' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[n] + '</svg>';
@@ -939,6 +940,15 @@ function tocGeom() {
   const cL = content.getBoundingClientRect().left;
   return { sbR: sbR, gutter: cL - sbR };
 }
+/* 留白太窄时把目录按钮收成圆形图标，避免压到正文 */
+function layoutTocFab() {
+  const fab = document.getElementById('tocFab');
+  if (!fab) return;
+  const g = tocGeom(); if (!g) return;
+  const compact = g.gutter < 104;
+  fab.classList.toggle('compact', compact);
+  if (compact) fab.style.left = (g.sbR + 10) + 'px';
+}
 function positionTocPanel() {
   const panel = document.getElementById('tocPanel');
   const fab = document.getElementById('tocFab');
@@ -948,7 +958,7 @@ function positionTocPanel() {
   
   const dockX = g.sbR + Math.max(14, (g.gutter - TOC_W) / 2);
   const overlay = g.gutter < TOC_W + 30;
-  fab.style.left = dockX + 'px';
+  if (!fab.classList.contains('compact')) fab.style.left = dockX + 'px';
   panel.style.left = dockX + 'px';
   panel.classList.toggle('overlay', overlay);
   if (bd) bd.hidden = !overlay;
@@ -975,6 +985,7 @@ function bindTocPanel(main) {
   panel.addEventListener('click', e => {
     if (e.target.closest('.toc-link') && panel.classList.contains('overlay')) setTocOpen(false);
   });
+  layoutTocFab();
   /* 宽屏默认展开（停靠在留白区）；留白不够宽时默认收起，点按钮临时浮出 */
   const g = tocGeom();
   setTocOpen(!!g && g.gutter >= TOC_W + 30);
@@ -983,6 +994,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.querySelector('.toc-panel:not([hidden])')) setTocOpen(false);
 });
 window.addEventListener('resize', () => {
+  layoutTocFab();
   if (document.querySelector('.toc-panel:not([hidden])')) positionTocPanel();
 });
 
@@ -1061,14 +1073,46 @@ function renderIntervModule(main, mid) {
   const done = !!store.data.learned[m.id];
   const g = INTERV.groups.find(x => x.key === m.grp) || { name: '' };
 
-  const mustHTML = '<div class="must"><h5>必背要点 · 照着说就能拿分</h5><ol>' +
-    m.points.map(p => '<li>' + p + '</li>').join('') + '</ol></div>';
+  /* 必背要点：每条都挂上它回答的那道题（按问题分组，组内保持原顺序） */
+  const mustGroups = (function () {
+    const map = new Map();
+    (m.pointMap || []).forEach((mp, pi) => {
+      const key = mp.t === 'none' ? 'none' : mp.t + ':' + mp.i;
+      if (!map.has(key)) map.set(key, { mp: mp, pts: [] });
+      map.get(key).pts.push(m.points[pi]);
+    });
+    const rank = { full: 0, qa: 1, none: 2 };
+    return [...map.values()]
+      .sort((a, b) => rank[a.mp.t] - rank[b.mp.t] || (a.mp.i || 0) - (b.mp.i || 0))
+      .map(g => {
+        let head;
+        if (g.mp.t === 'none') {
+          head = '<div class="must-q bare"><span class="mq-tag">通</span>' +
+            '<span class="mq-text">通用要点 · 本模块没有对应的原文问题</span></div>';
+        } else {
+          const isFull = g.mp.t === 'full';
+          const src = isFull ? m.full[g.mp.i] : m.qa[g.mp.i];
+          head = '<button class="must-q" type="button" data-goto="' +
+            (isFull ? 'iv-full-' : 'iv-qa-') + g.mp.i + '" title="跳到这道题的标准回答">' +
+            '<span class="mq-tag">问</span>' +
+            '<span class="mq-text">' + esc(src.q) + '</span>' +
+            (isFull ? '' : '<span class="mq-src">精编问答</span>') +
+            '<span class="mq-go">' + icon('arrow-right') + '</span></button>';
+        }
+        return '<div class="must-group">' + head + '<ol>' +
+          g.pts.map(p => '<li>' + p + '</li>').join('') + '</ol></div>';
+      }).join('');
+  })();
+
+  const mustHTML = '<div class="must"><h5>必背要点 · 照着说就能拿分</h5>' +
+    '<p class="must-hint">每条要点都标注了它回答的那道题，点问题直接跳到下方的标准回答。</p>' +
+    mustGroups + '</div>';
 
   const cardsHTML = m.cards.map((c, i) =>
     '<div class="kcard"><h4><span class="kn">' + String(i + 1).padStart(2, '0') + '</span>' + esc(c.t) + '</h4>' + c.body + '</div>').join('');
 
   const qaHTML = m.qa.map((q, i) =>
-    '<div class="qa" data-i="' + i + '">' +
+    '<div class="qa" id="iv-qa-' + i + '" data-i="' + i + '">' +
     '<div class="qa-head" role="button" tabindex="0" aria-expanded="false">' +
     '<span class="no-fire"></span><span class="q-text">' + esc(q.q) + '</span>' +
     '<span class="arrow">' + icon('chevron-down') + '</span></div>' +
@@ -1091,7 +1135,7 @@ function renderIntervModule(main, mid) {
     : '<a class="next" href="#/interview"><span class="dir">全部刷完？去</span>面试实战</a>';
 
   const fullHTML = m.full.map((q, i) =>
-    '<div class="qa qa-full" data-i="' + i + '">' +
+    '<div class="qa qa-full" id="iv-full-' + i + '" data-i="' + i + '">' +
     '<div class="qa-head" role="button" tabindex="0" aria-expanded="false">' +
     '<span class="no-fire"></span><span class="q-text"><span class="fno">' + String(i + 1).padStart(2, '0') + '</span>' + esc(q.q) + '</span>' +
     '<span class="arrow">' + icon('chevron-down') + '</span></div>' +
@@ -1150,6 +1194,20 @@ function renderIntervModule(main, mid) {
     h.addEventListener('click', toggle);
     h.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
   });
+
+  /* 必背要点 → 对应问题：点问题跳到答案并展开 */
+  main.querySelectorAll('.must-q[data-goto]').forEach(btn => btn.addEventListener('click', () => {
+    const t = document.getElementById(btn.getAttribute('data-goto'));
+    if (!t) return;
+    const head = t.querySelector('.qa-head');
+    if (head && !t.classList.contains('open')) head.click();
+    setTimeout(() => {
+      const y = t.getBoundingClientRect().top + window.scrollY - 90;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+      t.classList.add('flash');
+      setTimeout(() => t.classList.remove('flash'), 1800);
+    }, 620);
+  }));
 
   /* 本页目录：平滑滚动 + 滚动高亮 */
   if (tocObserver) { tocObserver.disconnect(); tocObserver = null; }
