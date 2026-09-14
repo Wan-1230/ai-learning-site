@@ -5,6 +5,7 @@ const PROJ = { rag: window.DATA_RAG, agent: window.DATA_AGENT, nlink: window.DAT
 const GEN = window.DATA_GENERAL;
 const AIPM = window.DATA_AIPM;
 const INTERV = window.DATA_INTERV;
+const DOCS = window.DATA_DOCS || { docs: [] };
 const PROJ_ORDER = ['rag', 'agent', 'nlink'];
 const DEFAULT_ACCENT = '#b4451f';
 
@@ -137,6 +138,7 @@ function renderNav() {
   /* 专项分组：进入任一子页都保持展开，点击目录项不再把自己收回去 */
   if (cur.view === 'interv' || cur.view === 'intervModule') openProjects.interv = true;
   if (cur.view === 'aipm' || cur.view === 'aipmModule') openProjects.aipm = true;
+  if (cur.view === 'docIndex' || cur.view === 'docModule') openProjects['doc-' + cur.docId] = true;
   let html = '<div class="nav-sec-label">开始</div>' +
     '<div class="nav-proj"><a class="nav-item ' + (cur.view === 'home' ? 'active' : '') + '" href="#/">' +
     '<span class="nav-idx">' + icon('compass') + '</span>学习总览</a></div>';
@@ -204,6 +206,24 @@ function renderNav() {
       });
     })();
 
+  html += '<div class="nav-sec-label">速通系列</div>' + (DOCS.docs || []).map(doc => {
+    const done = doc.modules.filter(m => store.data.learned[m.id]).length;
+    const items = '<a class="nav-item' + (cur.view === 'docIndex' && cur.docId === doc.id ? ' active' : '') +
+      '" href="#/doc/' + doc.id + '"><span class="nav-idx">' + icon('book') + '</span>模块目录' +
+      '<span class="nav-proj-badge" style="margin-left:auto">' + doc.modules.length + ' 模块</span></a>' +
+      doc.modules.map((m, i) => {
+        const active = cur.view === 'docModule' && cur.docId === doc.id && cur.mid === m.id;
+        return '<a class="nav-item' + (active ? ' active' : '') + '" href="#/doc/' + doc.id + '/m/' + m.id + '">' +
+          '<span class="nav-idx">' + String(i + 1).padStart(2, '0') + '</span>' + esc(m.title) +
+          (store.data.learned[m.id] ? '<span class="done">' + icon('check') + '</span>' : '') + '</a>';
+      }).join('');
+    return navGroupHTML({
+      pid: 'doc-' + doc.id, open: openProjects['doc-' + doc.id] ? ' open' : '',
+      active: (cur.view === 'docIndex' || cur.view === 'docModule') && cur.docId === doc.id,
+      color: doc.color, name: doc.name, done: done, total: doc.modules.length, items: items,
+    });
+  }).join('');
+
   html += '<div class="nav-sec-label">复习</div><div class="nav-proj">' +
     '<a class="nav-item ' + (cur.view === 'interview' ? 'active' : '') + '" href="#/interview"><span class="nav-idx">' + icon('flame') + '</span>面试实战</a>' +
     '<a class="nav-item ' + (cur.view === 'glossary' ? 'active' : '') + '" href="#/glossary"><span class="nav-idx">' + icon('layers') + '</span>术语速查表</a></div>';
@@ -236,6 +256,8 @@ function parseHash() {
   if (seg[0] === 'p' && seg[1]) return { view: 'proj', pid: seg[1] };
   if (seg[0] === 'aipm' && seg[1] === 'm' && seg[2]) return { view: 'aipmModule', mid: seg[2] };
   if (seg[0] === 'aipm') return { view: 'aipm' };
+  if (seg[0] === 'doc' && seg[1] && seg[2] === 'm' && seg[3]) return { view: 'docModule', docId: seg[1], mid: seg[3] };
+  if (seg[0] === 'doc' && seg[1]) return { view: 'docIndex', docId: seg[1] };
   if (seg[0] === 'interv' && seg[1] === 'm' && seg[2]) return { view: 'intervModule', mid: seg[2] };
   if (seg[0] === 'interv') return { view: 'interv' };
   if (seg[0] === 'interview') return { view: 'interview' };
@@ -259,6 +281,8 @@ function route() {
   else if (cur.view === 'aipmModule') renderAipmModule(main, cur.mid);
   else if (cur.view === 'interv') renderIntervIndex(main);
   else if (cur.view === 'intervModule') renderIntervModule(main, cur.mid);
+  else if (cur.view === 'docIndex') renderDocIndex(main, cur.docId);
+  else if (cur.view === 'docModule') renderDocModule(main, cur.docId, cur.mid);
   else if (cur.view === 'interview') renderInterview(main);
   else if (cur.view === 'glossary') renderGlossary(main);
   renderNav();
@@ -350,6 +374,11 @@ function renderHome(main) {
     '<div><h4>' + esc(INTERV.name) + '（' + INTERV.modules.length + ' 模块 · ' +
     INTERV.modules.reduce((n, m) => n + m.quiz.length, 0) + ' 道自测题）</h4>' +
     '<p>必背要点 + 知识卡片 + 图解 + 高频问答（含易错点）+ 自测题。覆盖基础概念、Runtime/Harness、Agent Loop、Checkpoint、上下文工程、ReAct、Planning、Tool Calling、MCP、Skills、Memory、Multi-Agent、安全、评测、框架、成本与系统设计题。</p></div></a>' +
+    secH('专项 · 速通系列文档', '按文件划分的独立学习块，每块一套完整小课') +
+    '<div class="kcard-grid stagger">' + (DOCS.docs || []).map(d =>
+      '<a class="kcard" style="display:block;text-decoration:none;color:inherit" href="#/doc/' + d.id + '">' +
+      '<h4><span class="kn" style="background:' + d.color + '">' + d.modules.length + '</span>' + esc(d.name) + '</h4>' +
+      '<p style="font-size:12.5px;color:var(--tx2);margin:6px 0 0">' + esc(d.blurb) + '</p></a>').join('') + '</div>' +
     secH('专项 · AI PM 核心能力', '脱离具体项目的通用硬技能，按模块直接套模板') +
     '<a class="path-step" style="--pc:#b4451f" href="#/aipm"><span class="pen">' + icon('pen-line') + '</span>' +
     '<div><h4>AI 产品经理核心能力（8 模块实战）</h4><p>能力差对照 · 全链路工作流 · Prompt 产品化 · 模型选型与成本测算 · 评估体系 · RAG/Agent 设计 · 指标与埋点 · 合规安全。每模块：知识卡片 + 1 道实战题 + 自校验标准。</p></div></a>' +
@@ -1066,17 +1095,19 @@ function renderIntervIndex(main) {
   });
 }
 
-function renderIntervModule(main, mid) {
-  const m = INTERV.modules.find(x => x.id === mid);
-  if (!m) { location.hash = '#/interv'; return; }
-  const idx = INTERV.modules.indexOf(m);
+/* 通用「学习模块」渲染器：面试速通与速通系列文档共用 */
+function renderStudyModule(main, ds, mid, o) {
+  const m = ds.modules.find(x => x.id === mid);
+  if (!m) { location.hash = o.indexHash; return; }
+  const idx = ds.modules.indexOf(m);
   const done = !!store.data.learned[m.id];
-  const g = INTERV.groups.find(x => x.key === m.grp) || { name: '' };
+  const hasFull = !!o.hasFull && !!m.full && m.full.length > 0;
 
   /* 必背要点：每条都挂上它回答的那道题（按问题分组，组内保持原顺序） */
   const mustGroups = (function () {
     const map = new Map();
-    (m.pointMap || []).forEach((mp, pi) => {
+    const pmList = (m.pointMap || []).map(v => (typeof v === 'number' ? { t: 'qa', i: v } : v));
+    pmList.forEach((mp, pi) => {
       const key = mp.t === 'none' ? 'none' : mp.t + ':' + mp.i;
       if (!map.has(key)) map.set(key, { mp: mp, pts: [] });
       map.get(key).pts.push(m.points[pi]);
@@ -1096,7 +1127,7 @@ function renderIntervModule(main, mid) {
             (isFull ? 'iv-full-' : 'iv-qa-') + g.mp.i + '" title="跳到这道题的标准回答">' +
             '<span class="mq-tag">问</span>' +
             '<span class="mq-text">' + esc(src.q) + '</span>' +
-            (isFull ? '' : '<span class="mq-src">精编问答</span>') +
+            (isFull || !o.hasFull ? '' : '<span class="mq-src">精编问答</span>') +
             '<span class="mq-go">' + icon('arrow-right') + '</span></button>';
         }
         return '<div class="must-group">' + head + '<ol>' +
@@ -1128,18 +1159,18 @@ function renderIntervModule(main, mid) {
   }).join('');
 
   const prev = idx > 0
-    ? '<a href="#/interv/m/' + INTERV.modules[idx - 1].id + '"><span class="dir">上一模块</span>' + esc(INTERV.modules[idx - 1].title) + '</a>'
-    : '<a href="#/interv"><span class="dir">返回</span>模块目录</a>';
-  const next = idx < INTERV.modules.length - 1
-    ? '<a class="next" href="#/interv/m/' + INTERV.modules[idx + 1].id + '"><span class="dir">下一模块</span>' + esc(INTERV.modules[idx + 1].title) + '</a>'
-    : '<a class="next" href="#/interview"><span class="dir">全部刷完？去</span>面试实战</a>';
+    ? '<a href="' + o.url(ds.modules[idx - 1]) + '"><span class="dir">上一模块</span>' + esc(ds.modules[idx - 1].title) + '</a>'
+    : '<a href="' + o.indexHash + '"><span class="dir">返回</span>模块目录</a>';
+  const next = idx < ds.modules.length - 1
+    ? '<a class="next" href="' + o.url(ds.modules[idx + 1]) + '"><span class="dir">下一模块</span>' + esc(ds.modules[idx + 1].title) + '</a>'
+    : '<a class="next" href="' + o.doneHash + '"><span class="dir">全部刷完？去</span>' + esc(o.doneLabel) + '</a>';
 
-  const fullHTML = m.full.map((q, i) =>
+  const fullHTML = hasFull ? m.full.map((q, i) =>
     '<div class="qa qa-full" id="iv-full-' + i + '" data-i="' + i + '">' +
     '<div class="qa-head" role="button" tabindex="0" aria-expanded="false">' +
     '<span class="no-fire"></span><span class="q-text"><span class="fno">' + String(i + 1).padStart(2, '0') + '</span>' + esc(q.q) + '</span>' +
     '<span class="arrow">' + icon('chevron-down') + '</span></div>' +
-    '<div class="qa-body"><div><div class="qa-answer qa-answer-full">' + q.a + '</div></div></div></div>').join('');
+    '<div class="qa-body"><div><div class="qa-answer qa-answer-full">' + q.a + '</div></div></div></div>').join('') : '';
 
   /* 本页目录：与正文各章节一一对应 */
   const secDefs = [
@@ -1147,7 +1178,7 @@ function renderIntervModule(main, mid) {
     ['iv-s-cards', '知识卡片'],
     m.imgs && m.imgs.length ? ['iv-s-fig', '图解'] : null,
     ['iv-s-qa', '高频问答'],
-    ['iv-s-full', '完整标准回答'],
+    hasFull ? ['iv-s-full', '完整标准回答'] : null,
     ['iv-s-quiz', '自测题'],
   ].filter(Boolean);
   const tocHTML = secDefs.map(s =>
@@ -1155,31 +1186,32 @@ function renderIntervModule(main, mid) {
 
   main.innerHTML = '<div class="fade-in">' +
     '<div class="content-col iv-content">' +
-    crumbHTML([{ t: '学习总览', href: '#/' }, { t: INTERV.name, href: '#/interv' }, { t: g.name }]) +
+    crumbHTML(o.crumb) +
     '<h1 class="page-title">' + esc(m.title) + '</h1>' +
-    '<div class="chips"><span class="chip">' + m.id.slice(3) + ' / ' + INTERV.modules.length + '</span>' + lvlHTML(m.lvl) +
+    '<div class="chips"><span class="chip">' + String(idx + 1).padStart(2, '0') + ' / ' + ds.modules.length + '</span>' + lvlHTML(m.lvl) +
     '<span class="chip">' + starHTML(m.star) + '</span>' +
     '<span class="chip">' + icon('clock') + '约 ' + m.minutes + ' 分钟</span>' +
-    '<span class="chip">' + m.cards.length + ' 卡 · ' + m.qa.length + ' 问 · ' + m.full.length + ' 原文 · ' + m.quiz.length + ' 题</span>' +
+    '<span class="chip">' + m.cards.length + ' 卡 · ' + m.qa.length + ' 问 · ' + m.quiz.length + ' 题' +
+    (hasFull ? ' · ' + m.full.length + ' 原文' : '') + '</span>' +
     (m.imgs && m.imgs.length ? '<span class="chip">' + icon('layers') + m.imgs.length + ' 张图解</span>' : '') + '</div>' +
-    '<button class="btn ' + (done ? 'btn-primary done' : 'btn-ghost') + '" id="ivLearnBtn" style="margin-top:18px">' + icon('check') + (done ? '已过（点击取消）' : '标记为已过') + '</button>' +
+    '<button class="btn ' + (done ? 'btn-primary done' : 'btn-ghost') + '" id="learnBtn" style="margin-top:18px">' + icon('check') + (done ? '已过（点击取消）' : '标记为已过') + '</button>' +
     '<div id="iv-s-must">' + secH('必背要点', '时间不够就只背这一段') + mustHTML + '</div>' +
     '<div id="iv-s-cards">' + secH('知识卡片', '细节、对比表与设计套路') +
     '<div class="kcard-grid stagger">' + cardsHTML + '</div></div>' +
     (m.imgs && m.imgs.length ? '<div id="iv-s-fig">' + secH('图解', '看图记结构，比背文字快；点击图片可放大') + figHTML(m.imgs) + '</div>' : '') +
     '<div id="iv-s-qa">' + secH('高频问答', '先自己口述一遍，再展开对照；红框是易错点') +
     '<div class="iv-qa-list">' + qaHTML + '</div></div>' +
-    '<div id="iv-s-full">' + secH('完整标准回答', '原文全量逐条收录，共 ' + m.full.length + ' 题，未做删减') +
+    (hasFull ? '<div id="iv-s-full">' + secH('完整标准回答', '原文全量逐条收录，共 ' + m.full.length + ' 题，未做删减') +
     '<div class="callout callout-pm"><div class="co-head">' + icon('info') + '这一节怎么用</div>' +
     '<p>上面「高频问答」是精编版（要点 + 易错点，适合快速过），这一节是<b>原文全量</b>，题目和答案逐字保留。精编版没看懂、或者想看完整表述的，来这里查；面试前用它查漏补缺。</p></div>' +
-    '<div class="iv-qa-list">' + fullHTML + '</div></div>' +
+    '<div class="iv-qa-list">' + fullHTML + '</div></div>' : '') +
     '<div id="iv-s-quiz">' + secH('自测题', '点击选项即时判分，可反复刷') +
     '<div class="quiz-score" id="scoreBox" style="display:none" aria-live="polite"></div>' +
     '<div class="stagger">' + quizHTML + '</div></div>' +
     '<div class="mod-nav">' + prev + next + '</div>' +
     '</div></div>' + tocPanelHTML(tocHTML);
 
-  $('#ivLearnBtn').addEventListener('click', () => {
+  $('#learnBtn').addEventListener('click', () => {
     if (store.data.learned[m.id]) delete store.data.learned[m.id];
     else store.data.learned[m.id] = 1;
     store.save(); renderIntervModule(main, mid);
@@ -1252,7 +1284,7 @@ function renderIntervModule(main, mid) {
     item.querySelector('.quiz-explain').classList.add('show');
     if (count === m.quiz.length) {
       const score = Math.round(correct / m.quiz.length * 100);
-      const key = 'iv-' + m.id;
+      const key = o.quizKey(m);
       const best = store.data.quizBest[key];
       if (best == null || score > best) { store.data.quizBest[key] = score; store.save(); }
       const box = $('#scoreBox');
@@ -1265,6 +1297,68 @@ function renderIntervModule(main, mid) {
       box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }));
+}
+
+/* 面试速通：走通用渲染器，含「原文全量问答」一节 */
+function renderIntervModule(main, mid) {
+  if (!INTERV.modules.some(x => x.id === mid)) { location.hash = '#/interv'; return; }
+  const m = INTERV.modules.find(x => x.id === mid);
+  const g = INTERV.groups.find(x => x.key === m.grp) || { name: '' };
+  renderStudyModule(main, INTERV, mid, {
+    hasFull: true,
+    crumb: [{ t: '学习总览', href: '#/' }, { t: INTERV.name, href: '#/interv' }, { t: g.name }],
+    indexHash: '#/interv', doneHash: '#/interview', doneLabel: '面试实战',
+    url: mm => '#/interv/m/' + mm.id,
+    quizKey: mm => 'iv-' + mm.id,
+  });
+}
+
+/* ---------- 速通系列文档：每份文档一个独立学习块 ---------- */
+function docById(id) { return (DOCS.docs || []).find(d => d.id === id); }
+
+function renderDocIndex(main, docId) {
+  const doc = docById(docId);
+  if (!doc) { location.hash = '#/'; return; }
+  const done = doc.modules.filter(m => store.data.learned[m.id]).length;
+  const mins = doc.modules.reduce((n, m) => n + m.minutes, 0);
+  const rows = doc.modules.map((m, i) => {
+    const ok = !!store.data.learned[m.id];
+    const best = store.data.quizBest[m.id];
+    return '<tr class="toc-row" data-href="#/doc/' + doc.id + '/m/' + m.id + '" tabindex="0" role="link">' +
+      '<td class="no">' + String(i + 1).padStart(2, '0') + '</td>' +
+      '<td class="name"><b>' + esc(m.title) + '</b> ' + lvlHTML(m.lvl) + starHTML(m.star) + '</td>' +
+      '<td class="dur">' + m.minutes + ' 分钟 · ' + m.cards.length + ' 卡 · ' + m.qa.length + ' 问 · ' + m.quiz.length + ' 题</td>' +
+      '<td class="st' + (ok ? '' : ' todo') + '">' + (best != null ? '测 ' + best + ' 分' : (ok ? '已过 ✓' : '未学')) + '</td></tr>';
+  }).join('');
+  main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:1140px">' +
+    crumbHTML([{ t: '学习总览', href: '#/' }, { t: doc.name }]) +
+    '<h1 class="page-title">' + esc(doc.name) + '</h1>' +
+    '<div class="chips"><span class="chip">' + icon('book') + doc.modules.length + ' 个模块</span>' +
+    '<span class="chip">' + icon('clock') + '全程约 ' + (Math.round(mins / 60 * 10) / 10) + ' 小时</span>' +
+    '<span class="chip">' + done + ' 个已过</span></div>' +
+    '<p class="summary-lead">' + esc(doc.blurb) + '</p>' +
+    secH('模块目录', '按原文顺序排列，建议从上往下过') +
+    '<table class="toc-table"><tbody>' +
+    '<tr class="toc-proj-head"><td colspan="4"><span class="dot" style="background:' + doc.color + '"></span>' + esc(doc.name) +
+    '<span class="sub">' + done + ' / ' + doc.modules.length + ' 模块</span></td></tr>' + rows + '</tbody></table>' +
+    '</div></div>';
+  main.querySelectorAll('.toc-row').forEach(el => {
+    const go = () => { location.hash = el.getAttribute('data-href'); };
+    el.addEventListener('click', go);
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  });
+}
+
+function renderDocModule(main, docId, mid) {
+  const doc = docById(docId);
+  if (!doc) { location.hash = '#/'; return; }
+  renderStudyModule(main, doc, mid, {
+    hasFull: false,
+    crumb: [{ t: '学习总览', href: '#/' }, { t: doc.name, href: '#/doc/' + doc.id }],
+    indexHash: '#/doc/' + doc.id, doneHash: '#/doc/' + doc.id, doneLabel: doc.name,
+    url: mm => '#/doc/' + doc.id + '/m/' + mm.id,
+    quizKey: mm => mm.id,
+  });
 }
 
 /* ---------- 全局搜索 ---------- */
@@ -1289,6 +1383,18 @@ function buildSearchIndex() {
     type: '面试题', hash: '#/interv/m/' + m.id, proj: INTERV.name, title: q.q,
     text: q.a.replace(/<[^>]+>/g, ' ') + ' ' + (q.pit || ''),
   })));
+  (DOCS.docs || []).forEach(doc => {
+    doc.modules.forEach(m => {
+      searchIndex.push({
+        type: '速通', hash: '#/doc/' + doc.id + '/m/' + m.id, proj: doc.name, title: m.title,
+        text: m.points.join(' ') + ' ' + m.cards.map(c => c.t + ' ' + c.body.replace(/<[^>]+>/g, ' ')).join(' ').slice(0, 500),
+      });
+      m.qa.forEach(q => searchIndex.push({
+        type: '速通题', hash: '#/doc/' + doc.id + '/m/' + m.id, proj: doc.name, title: q.q,
+        text: q.a.replace(/<[^>]+>/g, ' ') + ' ' + (q.pit || ''),
+      }));
+    });
+  });
 }
 function doSearch(q) {
   q = q.trim().toLowerCase();
