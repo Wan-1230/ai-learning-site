@@ -684,3 +684,101 @@ button.must-q:hover .mq-go{opacity:1;transform:translateX(0)}
 /* 留白不足时目录按钮收成圆形图标 */
 .toc-fab.compact{padding:9px;border-radius:50%}
 .toc-fab.compact span{display:none}
+
+/* =====================================================================
+   动效层 · 依据 motion-web skill 规范实现
+   - 仅使用 transform / opacity（合成器层，不触发布局）
+   - 时长分 fast / standard / medium / slow 四档令牌
+   - 揭示只作用于视口下方的内容；首屏不做入场（skill design-slop B2）
+   - 悬停反馈按元素语义各自表达，不做统一抬升（B1）
+   - reduced-motion 下内容原样呈现，绝不留隐藏态（B8 / 验收地板）
+   ===================================================================== */
+:root{
+  --t-base:320ms;      /* standard：面板、抽屉、按钮 */
+  --t-reveal:460ms;    /* medium：滚动揭示 */
+  --t-enter:520ms;     /* slow：页面 / 路由进入 */
+  --ease-in-expo:cubic-bezier(.7,0,.84,0);
+  --ease-back:cubic-bezier(.34,1.56,.64,1);
+  /* 用 linear() 在纯 CSS 里表达回弹手感，无需引入动画库 */
+  --spring-soft:linear(0,.32 8%,.79 20%,1.03 30%,1.01 46%,1);
+  --rv-shift:14px;
+}
+
+/* ---------- 1. 滚动进入视口揭示 ---------- */
+/* 默认（无 JS / 无 IntersectionObserver / reduced-motion）：完全不设起始态。
+   只有 JS 在 <html> 上写入 data-rv="on" 后起始态才生效，
+   因此脚本失败时内容照常可见 —— 不会出现整页空白。 */
+/* animation:none 是必须的：站点原有的 .stagger>* 用了 fill-mode:both，
+   动画会以「动画原点」优先级永久钉住 opacity:1，普通声明压不住它。 */
+html[data-rv="on"] .rv{animation:none;opacity:0;transform:translateY(var(--rv-shift));transition:none}
+html[data-rv="on"] .rv.rv-in{opacity:1;transform:none;
+  transition:opacity var(--t-reveal) var(--ease-out),transform var(--t-reveal) var(--ease-out);
+  transition-delay:var(--rv-d,0ms)}
+/* 图解用「缩放收敛」而不是纯位移，与卡片列表的入场区分开 */
+html[data-rv="on"] .rv-fig{transform:translateY(10px) scale(.982);transform-origin:center top}
+html[data-rv="on"] .rv-fig.rv-in{transform:none}
+
+/* ---------- 2. 悬停 / 焦点反馈 ---------- */
+/* 知识卡片：加深描边 + 底纹（表达「这是可读内容块」，不做位移抬升） */
+.kcard{transition:border-color var(--t-fast) var(--ease-out),background var(--t-fast) var(--ease-out)}
+.kcard:hover{border-color:var(--line2);background:var(--panel2)}
+/* 参考卡：外链箭头向右上微移（表达「会跳到外部」） */
+.ref-card .ic{transition:transform var(--t-base) var(--ease-out)}
+.ref-card:hover .ic{transform:translate(2px,-2px)}
+/* 路径步骤：整体右移 3px（表达「向前一步」） */
+.path-step{transition:transform var(--t-base) var(--ease-out)}
+.path-step:hover{transform:translateX(3px)}
+/* 按钮：回弹缓动 + 轻微上浮；按下时回落 */
+.btn-primary{transition:background var(--t-fast),color var(--t-fast),border-color var(--t-fast),transform var(--t-base) var(--spring-soft)}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0) scale(.975)}
+.btn-ghost{transition:background var(--t-fast),color var(--t-fast),border-color var(--t-fast),transform var(--t-base) var(--spring-soft)}
+/* 侧边栏条目：内容右缩（表达「切到这一条」） */
+.nav-item{transition:background var(--t-fast),color var(--t-fast),padding-left var(--t-base) var(--ease-out)}
+.nav-item:hover{padding-left:19px}
+/* 术语卡、卡片正文等纯阅读内容不加悬停动效 —— 没有交互就不该有反应 */
+
+/* 键盘焦点环：只在键盘导航时出现，不改变默认视觉 */
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.btn:focus-visible,.opt:focus-visible,.toc-link:focus-visible,.nav-item:focus-visible,
+.must-q:focus-visible,.nav-proj-head:focus-visible,.qa-head:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+/* ---------- 3. 路由切换过渡 ---------- */
+.fade-in{animation:fade var(--t-enter) var(--ease-out)}
+
+/* ---------- 4. 加载 / 提交等微交互 ---------- */
+/* 测验作答反馈：正确项回弹、错误项轻微回摆 */
+.opt.correct{animation:optPop 420ms var(--spring-soft)}
+.opt.wrong{animation:optNudge 300ms var(--ease-out)}
+/* 计分板浮出 */
+.quiz-score{animation:popIn 380ms var(--ease-out)}
+/* 搜索结果展开 */
+.search-results.show{animation:popIn 240ms var(--ease-out)}
+/* 「标记为已过」完成后打勾弹动 */
+.btn.done .ic{animation:optPop 420ms var(--spring-soft)}
+/* 目录面板浮出 */
+.toc-panel:not([hidden]){animation:tocIn 240ms var(--ease-out)}
+.toc-fab{transition:background var(--t-fast),color var(--t-fast),border-color var(--t-fast),transform var(--t-base) var(--spring-soft)}
+.toc-fab:hover{transform:scale(1.04)}
+.toc-fab:active{transform:scale(.96)}
+
+@keyframes optPop{0%{transform:scale(1)}38%{transform:scale(1.022)}100%{transform:scale(1)}}
+@keyframes optNudge{0%,100%{transform:translateX(0)}30%{transform:translateX(-2px)}70%{transform:translateX(2px)}}
+@keyframes popIn{from{opacity:0;transform:translateY(6px) scale(.99)}to{opacity:1;transform:none}}
+@keyframes tocIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+/* ---------- 5. reduced-motion 降级阶梯 ---------- */
+@media (prefers-reduced-motion: reduce){
+  /* 关键：揭示元素直接落到最终态，绝不留隐藏 */
+  html[data-rv="on"] .rv,
+  html[data-rv="on"] .rv-fig{opacity:1!important;transform:none!important;transition:none!important}
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
+  .nav-item:hover{padding-left:15px}
+  .path-step:hover{transform:none}
+  .btn-primary:hover{transform:none}
+}

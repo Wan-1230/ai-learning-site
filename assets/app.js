@@ -285,6 +285,7 @@ function route() {
   else if (cur.view === 'docModule') renderDocModule(main, cur.docId, cur.mid);
   else if (cur.view === 'interview') renderInterview(main);
   else if (cur.view === 'glossary') renderGlossary(main);
+  initReveal(main);
   renderNav();
   $('#sidebar').classList.remove('open');
 }
@@ -1297,6 +1298,8 @@ function renderStudyModule(main, ds, mid, o) {
       box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }));
+
+  initReveal(main);
 }
 
 /* 面试速通：走通用渲染器，含「原文全量问答」一节 */
@@ -1359,6 +1362,62 @@ function renderDocModule(main, docId, mid) {
     url: mm => '#/doc/' + doc.id + '/m/' + mm.id,
     quizKey: mm => mm.id,
   });
+}
+
+/* ---------- 滚动揭示（motion-web skill 规范） ----------
+   只给「视口下方」的内容加入场；首屏内容保持原样，不做入场动画。
+   未启用（无 IntersectionObserver / reduced-motion / 脚本失败）时不留任何起始态，
+   因此内容永远不会卡在隐藏状态。 */
+const RV_SEL = '.kcard,.stat-tile,.flip,.term-card,.ref-card,.path-step,.stack-panel,.toc-table,.qa-group,.iv-fig';
+let rvObserver = null;
+function initReveal(root) {
+  if (rvObserver) { rvObserver.disconnect(); rvObserver = null; }
+  const html = document.documentElement;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce || !('IntersectionObserver' in window)) { html.removeAttribute('data-rv'); return; }
+  const vh = window.innerHeight || 800;
+  const items = [];
+  root.querySelectorAll(RV_SEL).forEach(el => {
+    const r = el.getBoundingClientRect();
+    if (r.height > 0 && r.top > vh * 0.88) items.push(el);   /* 视口内的一律不加入场 */
+  });
+  if (!items.length) { html.removeAttribute('data-rv'); return; }
+  html.setAttribute('data-rv', 'on');
+  /* 同一父容器内按 70ms 错峰（skill standard-list） */
+  const byParent = new Map();
+  items.forEach(el => {
+    const k = el.parentElement;
+    if (!byParent.has(k)) byParent.set(k, []);
+    byParent.get(k).push(el);
+  });
+  byParent.forEach(list => list.forEach((el, i) => {
+    el.style.setProperty('--rv-d', Math.min(i * 70, 350) + 'ms');
+    if (el.classList.contains('iv-fig')) el.classList.add('rv-fig');
+    el.classList.add('rv');
+  }));
+  rvObserver = new IntersectionObserver((ents, obs) => {
+    ents.forEach(en => {
+      if (!en.isIntersecting) return;
+      const el = en.target;
+      el.classList.add('rv-in');
+      obs.unobserve(el);
+      /* 播完只清掉错峰延时；保留 rv/rv-in —— 若移除，.stagger 的入场动画
+         会被重新挂上并重播一次。 */
+      setTimeout(() => el.style.removeProperty('--rv-d'), 900);
+    });
+  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.06 });
+  items.forEach(el => rvObserver.observe(el));
+  /* 兜底：1.2s 后把「已在视口内却仍未揭示」的补上，杜绝卡隐藏 */
+  setTimeout(() => {
+    items.forEach(el => {
+      if (el.classList.contains('rv-in')) return;
+      const r = el.getBoundingClientRect();
+      if (r.top < vh && r.bottom > 0) {
+        el.classList.add('rv-in');
+        el.style.removeProperty('--rv-d');
+      }
+    });
+  }, 1200);
 }
 
 /* ---------- 全局搜索 ---------- */
