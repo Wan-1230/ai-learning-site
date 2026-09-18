@@ -871,3 +871,33 @@ html[data-rv="on"] .rv-fig.rv-in{transform:none}
   .must,.quiz-item{padding:var(--sp-4) var(--sp-4)}
   .kcard-grid,.flip-grid,.refs,.stat-tiles{gap:var(--sp-2)}
 }
+
+/* =====================================================================
+   实战讲法 · 长文阅读页（叙述型指南：段落 / 表格 / 示范回答引用块）
+   ===================================================================== */
+.guide-col{max-width:860px}
+.guide-col p{margin:0 0 var(--sp-3);color:var(--tx)}
+.guide-col b{color:var(--tx-strong)}
+.guide-col ul,.guide-col ol{margin:0 0 var(--sp-3);padding-left:var(--sp-5)}
+.guide-col li{margin:var(--sp-1) 0}
+.guide-col code{font-family:var(--mono);font-size:var(--fs-2xs);background:var(--panel2);
+  padding:1px 5px;border-radius:var(--r-xs)}
+
+/* 章内小节标题（h3/h4） */
+.guide-col .g-h3,.guide-col .g-h4{font-family:var(--serif);font-weight:700;
+  margin:var(--sp-6) 0 var(--sp-2);font-size:var(--fs-md);color:var(--tx)}
+
+/* 表格：与知识卡片同一套描边 / 底色 */
+.g-table{margin:var(--sp-4) 0;font-size:var(--fs-sm)}
+.g-table th{background:var(--panel2);font-weight:700;text-align:left;white-space:nowrap}
+.g-table th,.g-table td{padding:var(--sp-2) var(--sp-3);border-bottom:1px solid var(--line);
+  vertical-align:top;line-height:1.7}
+
+/* 示范回答引用块：铁锈红左缘 + 浅底，与正文 .callout 同族但更轻 */
+.g-quote{border-left:3px solid var(--acc);background:var(--acc-dim);
+  padding:var(--sp-3) var(--sp-4);margin:var(--sp-4) 0;
+  border-radius:0 var(--r-md) var(--r-md) 0;color:var(--tx-strong)}
+.g-quote p{margin:0 0 var(--sp-2);font-size:var(--fs-sm);line-height:1.9;color:var(--tx-strong)}
+.g-quote p:last-child,.g-quote ul:last-child,.g-quote ol:last-child{margin-bottom:0}
+.g-quote ul,.g-quote ol{padding-left:var(--sp-5);margin:0 0 var(--sp-2)}
+@media print{.toc-panel,.toc-fab{display:none!important}}

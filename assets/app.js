@@ -6,6 +6,7 @@ const GEN = window.DATA_GENERAL;
 const AIPM = window.DATA_AIPM;
 const INTERV = window.DATA_INTERV;
 const DOCS = window.DATA_DOCS || { docs: [] };
+const GUIDE = window.DATA_GUIDE;
 const PROJ_ORDER = ['rag', 'agent', 'nlink'];
 const DEFAULT_ACCENT = '#b4451f';
 
@@ -206,6 +207,10 @@ function renderNav() {
       });
     })();
 
+  html += '<div class="nav-proj">' +
+    '<a class="nav-item ' + (cur.view === 'guide' ? 'active' : '') + '" href="#/guide/' + GUIDE.id + '">' +
+    '<span class="nav-idx">' + icon('compass') + '</span>Agent 项目实战讲法</a></div>';
+
   html += '<div class="nav-sec-label">速通系列</div>' + (DOCS.docs || []).map(doc => {
     const done = doc.modules.filter(m => store.data.learned[m.id]).length;
     const items = '<a class="nav-item' + (cur.view === 'docIndex' && cur.docId === doc.id ? ' active' : '') +
@@ -258,6 +263,7 @@ function parseHash() {
   if (seg[0] === 'aipm') return { view: 'aipm' };
   if (seg[0] === 'doc' && seg[1] && seg[2] === 'm' && seg[3]) return { view: 'docModule', docId: seg[1], mid: seg[3] };
   if (seg[0] === 'doc' && seg[1]) return { view: 'docIndex', docId: seg[1] };
+  if (seg[0] === 'guide' && seg[1]) return { view: 'guide', gid: seg[1] };
   if (seg[0] === 'interv' && seg[1] === 'm' && seg[2]) return { view: 'intervModule', mid: seg[2] };
   if (seg[0] === 'interv') return { view: 'interv' };
   if (seg[0] === 'interview') return { view: 'interview' };
@@ -281,6 +287,7 @@ function route() {
   else if (cur.view === 'aipmModule') renderAipmModule(main, cur.mid);
   else if (cur.view === 'interv') renderIntervIndex(main);
   else if (cur.view === 'intervModule') renderIntervModule(main, cur.mid);
+  else if (cur.view === 'guide') renderGuide(main, cur.gid);
   else if (cur.view === 'docIndex') renderDocIndex(main, cur.docId);
   else if (cur.view === 'docModule') renderDocModule(main, cur.docId, cur.mid);
   else if (cur.view === 'interview') renderInterview(main);
@@ -383,6 +390,9 @@ function renderHome(main) {
     secH('专项 · AI PM 核心能力', '脱离具体项目的通用硬技能，按模块直接套模板') +
     '<a class="path-step" style="--pc:#b4451f" href="#/aipm"><span class="pen">' + icon('pen-line') + '</span>' +
     '<div><h4>AI 产品经理核心能力（8 模块实战）</h4><p>能力差对照 · 全链路工作流 · Prompt 产品化 · 模型选型与成本测算 · 评估体系 · RAG/Agent 设计 · 指标与埋点 · 合规安全。每模块：知识卡片 + 1 道实战题 + 自校验标准。</p></div></a>' +
+    secH('专项 · Agent 项目实战讲法', '面试官怎么追问、你怎么答——把项目讲出判断力') +
+    '<a class="path-step" style="--pc:#b4451f" href="#/guide/' + GUIDE.id + '"><span class="pen">' + icon('compass') + '</span>' +
+    '<div><h4>' + esc(GUIDE.name) + '（' + GUIDE.sections.length + ' 章）</h4><p>面试官在考什么 · 项目复盘表怎么写 · 用一个案例讲清项目 · 技术选型六个必答问题 · 稳定性设计 · 指标怎么讲 · Badcase 复盘 · 面试前准备清单。</p></div></a>' +
     secH('开源学习地图', '每个技术方向都有一流的开源代码可以读') + osMap +
     '<div class="foot">基于本地三个项目源码（<span class="mono">' + paths + '</span>）与三份面试文档生成。<br>' +
     '学习进度保存在本机浏览器 · 按 <kbd>/</kbd> 全站搜索 · 纯静态页面，可离线使用，可直接打印。</div>' +
@@ -1420,6 +1430,35 @@ function initReveal(root) {
   }, 1200);
 }
 
+/* ---------- 实战讲法：单篇长文阅读页 ---------- */
+function renderGuide(main, gid) {
+  const g = GUIDE;
+  if (!g || g.id !== gid) { location.hash = '#/'; return; }
+  const chars = g.sections.reduce((n, x) => n + x.html.replace(/<[^>]+>/g, '').length, 0);
+  const minutes = Math.max(8, Math.round(chars / 380));
+  const links = g.sections.map((s, i) =>
+    '<a class="toc-link" data-toc="g-s-' + i + '" href="#g-s-' + i + '">' +
+    esc(s.no + '、' + s.title) + '</a>').join('');
+  main.innerHTML = '<div class="fade-in"><div class="content-col guide-col">' +
+    crumbHTML([{ t: '学习总览', href: '#/' }, { t: g.name }]) +
+    '<h1 class="page-title">' + esc(g.name) + '</h1>' +
+    '<div class="chips"><span class="chip">' + icon('compass') + '讲法指南</span>' +
+    '<span class="chip">' + icon('clock') + '约 ' + minutes + ' 分钟</span>' +
+    '<span class="chip">' + g.sections.length + ' 章</span></div>' +
+    '<p class="summary-lead">' + esc(g.blurb) + '</p>' +
+    g.sections.map((s, i) =>
+      '<div id="g-s-' + i + '">' + secH(s.no + '、' + s.title) + s.html + '</div>').join('') +
+    '</div></div>' + tocPanelHTML(links);
+
+  main.querySelectorAll('.toc-link').forEach(l => l.addEventListener('click', e => {
+    e.preventDefault();
+    const t = document.getElementById(l.getAttribute('data-toc'));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  bindTocPanel(main);
+  initReveal(main);
+}
+
 /* ---------- 全局搜索 ---------- */
 let searchIndex = null;
 function buildSearchIndex() {
@@ -1437,6 +1476,10 @@ function buildSearchIndex() {
   INTERV.modules.forEach(m => searchIndex.push({
     type: '面试', hash: '#/interv/m/' + m.id, proj: INTERV.name, title: m.title,
     text: m.points.join(' ') + ' ' + m.cards.map(c => c.t + ' ' + c.body.replace(/<[^>]+>/g, ' ')).join(' ').slice(0, 500),
+  }));
+  (GUIDE.sections || []).forEach(s => searchIndex.push({
+    type: '讲法', hash: '#/guide/' + GUIDE.id, proj: GUIDE.name,
+    title: s.no + '、' + s.title, text: s.html.replace(/<[^>]+>/g, ' '),
   }));
   INTERV.modules.forEach(m => m.qa.forEach(q => searchIndex.push({
     type: '面试题', hash: '#/interv/m/' + m.id, proj: INTERV.name, title: q.q,
