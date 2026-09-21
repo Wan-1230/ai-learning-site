@@ -155,6 +155,7 @@ h1.page-title{font-family:var(--serif);font-size:var(--fs-3xl);font-weight:900;l
 .card{padding:8px 0 16px;margin:24px 0;border:none}
 .card h3{font-family:var(--serif);font-size:var(--fs-md);font-weight:700;margin-bottom:12px;display:flex;align-items:baseline;gap:12px}
 .card h3::before{content:'';width:9px;height:9px;background:var(--acc);flex-shrink:0;transform:translateY(-1px) rotate(45deg)}
+.card h3 .aux{font-family:var(--sans);font-size:var(--fs-xs);font-weight:400;color:var(--tx3)}
 .card p{margin:8px 0;color:var(--tx-strong);max-width:44em}
 .card ul,.card ol{margin:12px 0;list-style:none;max-width:44em}
 .card li{padding-left:20px;position:relative;margin:8px 0;color:var(--tx-strong)}

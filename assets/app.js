@@ -611,8 +611,15 @@ function renderInterview(main) {
     '<p class="apply">结合项目 — ' + esc(h.hook) + '</p></div>').join('');
   const tips = GEN.tips.map(t => '<div class="term-card"><h4>' + esc(t.t) + '</h4><p>' + esc(t.d) + '</p></div>').join('');
   const notes = GEN.introNotes.map(n => '<li><b>' + esc(n[0]) + '</b> — ' + esc(n[1]) + '</li>').join('');
-  const introHTML = '<div class="card"><p style="font-size:14.5px;line-height:2.1;max-width:44em">' + GEN.intro30 + '</p>' +
-    '<ul style="margin-top:14px;max-width:44em">' + notes + '</ul></div>';
+  const introVer = (label, meta, body) => '<div class="card"><h3>' + label +
+    '<span class="aux">' + meta + '</span></h3>' + body + '</div>';
+  const introHTML =
+    introVer('30 秒版', '126 字 · 约 30 秒',
+      '<p style="font-size:14.5px;line-height:2.1;max-width:44em">' + GEN.intro30 + '</p>') +
+    introVer('2 分钟版', '508 字 · 约 2 分钟',
+      GEN.intro2min.map(p => '<p style="font-size:14.5px;line-height:2.1;max-width:44em">' + p + '</p>').join('')) +
+    introVer('讲述要点', '按 250 字/分钟的口播速度校准',
+      '<ul style="max-width:44em">' + notes + '</ul>');
 
   main.innerHTML = '<div class="fade-in"><div class="content-col" style="max-width:1040px">' +
     crumbHTML([{ t: '学习总览', href: '#/' }, { t: '面试实战' }]) +
@@ -620,7 +627,7 @@ function renderInterview(main) {
     '<div class="chips"><span class="chip">' + icon('flame') + qaTotal + ' 道高频题</span>' +
     '<span class="chip">' + Object.keys(store.data.qaDone).length + ' 已掌握</span>' +
     '<span class="chip">琥珀色火苗 = 2026 时效热点</span></div>' +
-    secH('30 秒自我介绍', '背熟版——数字先行，标签开门') + introHTML +
+    secH('自我介绍', '30 秒版用于开场和电梯场景；面试官说「请做个自我介绍」时给 2 分钟版') + introHTML +
     secH('数字弹药卡', '点击翻面看细节，面试前快速过一遍') +
     '<div class="flip-grid stagger">' + numCards + '</div>' +
     secH('通用加分策略') + tips +
