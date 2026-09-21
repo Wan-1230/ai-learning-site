@@ -614,9 +614,9 @@ function renderInterview(main) {
   const introVer = (label, meta, body) => '<div class="card"><h3>' + label +
     '<span class="aux">' + meta + '</span></h3>' + body + '</div>';
   const introHTML =
-    introVer('30 秒版', '126 字 · 约 30 秒',
+    introVer('30 秒版', '120 字 · 约 30 秒',
       '<p style="font-size:14.5px;line-height:2.1;max-width:44em">' + GEN.intro30 + '</p>') +
-    introVer('2 分钟版', '508 字 · 约 2 分钟',
+    introVer('2 分钟版', '515 字 · 约 2 分钟',
       GEN.intro2min.map(p => '<p style="font-size:14.5px;line-height:2.1;max-width:44em">' + p + '</p>').join('')) +
     introVer('讲述要点', '按 250 字/分钟的口播速度校准',
       '<ul style="max-width:44em">' + notes + '</ul>');
