@@ -6,28 +6,28 @@ window.DATA_NLINK = {
   color: 'var(--nlink)',
   colorHex: '#1e5fbb',
   path: 'D:\\1\\N-Link',
-  repo: '',
+  repo: 'https://github.com/Wan-1230/N-link',
   live: '',
-  blurb: '尼康 Z 系列微单「永不断联」伴侣 App：照片传输、遥控拍摄、Live View 监看、参数管理四大模块，BLE/WiFi/USB 三通道互备。已有 v0.1.4 APK，AI 修图为 Phase 4 规划（完整 PRD）。',
-  tags: ['Kotlin', 'MVVM', 'BLE', 'PTP/IP', 'Room', 'Coroutines', '端侧 AI'],
+  blurb: '尼康 Z 系列微单「永不断联」伴侣 App，开源：连接 → 浏览 → 传输 → 遥控 → 监看 全链路已跑通，v2.3.1 已发布（102 个 Kotlin 文件 / 3.3 万行 / 122 个单元测试）。BLE 保活 + WiFi PTP/IP + USB 三通道互备。AI 修图目前只有一份 Draft PRD，零代码。',
+  tags: ['Kotlin', 'MVVM', 'BLE', 'PTP/IP', 'Room', 'Coroutines', '开源'],
   overview: {
     stack: [
       ['Kotlin 2.1.0', '安卓官方推荐语言：简洁、空安全、协程原生'],
       ['MVVM + ViewBinding', '界面 / 业务逻辑 / 数据 三层分离（XML 布局，非 Compose）'],
       ['Coroutines + StateFlow', '后台任务与响应式状态：传图不卡界面，状态自动更新'],
       ['Room 2.6.1', '本地数据库：传输历史、配对设备（含唯一索引去重 + 手写迁移）'],
-      ['Hilt 2.53.1', '依赖注入：12 个核心单例自动拼装，少写初始化代码'],
+      ['Hilt 2.53.1', '依赖注入：33 个 @Singleton 自动拼装，少写初始化代码'],
       ['BLE / PTP/IP / USB', '相机三通道：配对保活 / 高速传输 / 有线兜底'],
       ['WorkManager 2.10.0', '15 分钟周期健康检查，异常自愈'],
       ['minSdk 29 / target 35', 'Android 10 起（BLE 5.0 完整支持），目标 Android 15'],
     ],
     numbers: [
-      ['3 通道', 'BLE 配对 + WiFi 高速 + USB 有线，互为兜底'],
+      ['v2.3.1', '已发布版本（versionCode 23，仓库 15 个 tag）'],
+      ['3.3 万行', '102 个 Kotlin 文件，33,691 行'],
+      ['122 个', '单元测试 @Test（21 个测试类，纯 JVM）'],
+      ['3 通道', 'BLE 配对保活 + WiFi 高速 + USB 有线，互为兜底'],
       ['4 阶段', '尼康标准 BLE 配对协议（含 Blowfish 加密）'],
-      ['<3 秒', '断联自动恢复目标（PRD）'],
-      ['>99%', '24h 连接保持率（北极星指标）'],
-      ['<200ms', 'Live View 延迟目标'],
-      ['1s×2→30s', '指数退避重连：初始 1 秒翻倍，上限 30 秒，永不放弃'],
+      ['1071 行', 'ConnectionManager 单文件——三通道编排全在这里'],
     ],
     refs: [
       { name: 'Now in Android（google/nowinandroid）', url: 'https://github.com/android/nowinandroid', why: 'Google 官方 MVVM 范例 App，学架构的首选开源项目' },
@@ -35,7 +35,7 @@ window.DATA_NLINK = {
       { name: 'libgphoto2', url: 'https://github.com/gphoto/libgphoto2', why: '开源相机 PTP 实现鼻祖，看它如何处理各厂商操作码' },
       { name: 'Android BLE 官方指南', url: 'https://developer.android.com/develop/connectivity/bluetooth/ble/ble-overview', why: 'GATT、扫描、连接的权威文档' },
     ],
-    flow: ['BLE 扫描与 4 阶段配对（Blowfish 加密）', 'BLE 下发 WiFi 凭证 / mDNS 自动发现相机', '连接升级到 PTP/IP 高速通道（USB 有线优先兜底）', '前台服务保活 + 5 秒 BLE 心跳', '传输 / 遥控 / Live View / 参数（PTP 操作码）', '断线 → 状态机 → 指数退避重连（永不放弃）', 'WorkManager 15 分钟健康检查兜底'],
+    flow: ['BLE 扫描与 4 阶段配对（Blowfish 加密）', 'BLE 下发 WiFi 凭证 / mDNS 自动发现相机', '连接升级到 PTP/IP 高速通道（USB 有线优先兜底）', '前台服务保活 + 5 秒 BLE 心跳', '传输 / 遥控 / Live View / 参数（PTP 操作码）', '断线 → 状态机 → 指数退避重连（上限 30 秒；WiFi 直连另有 10 次尝试预算）', 'WorkManager 15 分钟健康检查兜底'],
   },
   modules: [
     {
@@ -200,7 +200,7 @@ suspend fun insert(record: TransferRecord)`, explain: '教学点：去重不在�
     {
       id: 'nlink-6', title: '三通道互备与状态机：永不断联的工程', level: '硬核', minutes: 20,
       keywords: '状态机 指数退避 重连 三通道 usb wifi ble 保活',
-      summary: 'BLE（常驻低功耗）+ WiFi（高速传输）+ USB（有线兜底）三条通道互为备份，由 251 行的状态机统一调度：断线 → 指数退避重连（1s 翻倍、上限 30s、永不放弃）。这一课有互动模拟器，亲手体验「永不放弃」是怎么跑的。',
+      summary: 'BLE（常驻低功耗）+ WiFi（高速传输）+ USB（有线兜底）三条通道互为备份，由 308 行的状态机统一调度：断线 → 指数退避重连（1s 翻倍、上限 30s）。这一课有互动模拟器，亲手体验「永不放弃」是怎么跑的。',
       demo: 'backoff',
       sections: [
         { h: '六状态连接状态机（真实源码）', body: `<p>状态：DISCONNECTED → CONNECTING → BLE_CONNECTED → WIFI_UPGRADING → FULLY_CONNECTED，出错进 ERROR_WAITING_RETRY。状态转移写成纯函数（一张「状态 × 事件 → 新状态」的表），可测试、无隐藏分支：</p>`, code: [
@@ -221,7 +221,7 @@ private fun resetRetry() {
     retryJob?.cancel()
     currentRetryDelay = INITIAL_RETRY_DELAY_MS     // 成功后归零
     _retryCount.value = 0
-}`, explain: '教学点：为什么翻倍而不是固定 1 秒重试？相机还没缓过来时高频重试 = 重试风暴，反而拖垮恢复。上限 30 秒 + 永不放弃 = 最坏情况每 30 秒试一次，用户抬头时总能自动接上。' },
+}`, explain: '教学点：为什么翻倍而不是固定 1 秒重试？相机还没缓过来时高频重试 = 重试风暴，反而拖垮恢复。上限 30 秒 = 最坏情况每 30 秒试一次，用户抬头时总能自动接上。注意分层：状态机层一直重试，但 WiFi 直连有自己的 10 次预算（1s/2s/4s/8s/15s×5，约 90 秒），连续 3 次不可达会提前放弃——「永不放弃」只在编排层成立，别讲成全局事实。' },
           ] },
         { h: '三通道怎么分工', body: `<ul>
 <li><b>BLE</b>：常驻心跳 + 配对 + WiFi 凭证下发——「值班室」，功耗 &lt;3%/24h</li>
@@ -296,7 +296,7 @@ private fun resetRetry() {
   ],
   quiz: [
     { q: 'N-Link 的三通道是指？', opts: ['WiFi / 蜂窝 / NFC', 'BLE / WiFi（PTP/IP）/ USB', '蓝牙经典 / 红外 / USB', 'BLE / NFC / WiFi'], a: 1, why: 'BLE 常驻配对保活、WiFi PTP/IP 高速传输、USB 有线兜底，互为备份。' },
-    { q: '指数退避重连的参数是？', opts: ['固定每 1 秒重试', '初始 1s 翻倍、上限 30s、永不放弃', '重试 3 次后放弃', '初始 30s 递减'], a: 1, why: '翻倍避免重试风暴，上限 30s 保证最坏情况下每 30 秒仍有尝试，永不放弃保证用户总能自动接上。' },
+    { q: '指数退避重连的参数是？', opts: ['固定每 1 秒重试', '初始 1s 翻倍、状态机层上限 30s 持续重试', '重试 3 次后永久放弃', '初始 30s 递减'], a: 1, why: '翻倍避免重试风暴，上限 30s 保证最坏情况下每 30 秒仍有尝试，永不放弃保证用户总能自动接上。' },
     { q: 'BLE 心跳的判定逻辑是？', opts: ['每 60 秒发一次消息', '5 秒一次 RSSI 心跳，连续 3 次失败判掉线', '等系统蓝牙断开回调', '用户手动刷新'], a: 1, why: '主动轮询信号强度比等系统回调更快发现断联，是「频断联被治好」的关键一环。' },
     { q: 'PTP/IP 跑在哪个端口？遵循什么标准？', opts: ['8080 端口 / HTTP', '15740 端口 / ISO 15740', '5353 端口 / mDNS', '443 端口 / TLS'], a: 1, why: 'PTP/IP 用 TCP 15740；协议本身是 ISO 15740 相机工业标准，尼康/佳能通用。' },
     { q: '传输历史表如何保证同一张照片不被重复记录？', opts: ['应用层 if 判断', '数据库唯一索引 + OnConflictStrategy.IGNORE', '每次清空表重写', '交给用户手动去重'], a: 1, why: 'file_handle 唯一索引把去重下沉到数据库层，并发插入也不会重复——约束比代码更可靠。' },

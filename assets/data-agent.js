@@ -8,8 +8,8 @@ window.DATA_AGENT = {
   path: 'D:\\gork\\wth',
   repo: 'https://github.com/Wan-1230/Wide-Thought-Host',
   live: '',
-  blurb: '隐私优先的 AI 编码智能体运行时：CLI（ratatui TUI）+ Desktop（Tauri）双形态，多模型路由、子智能体委派、MCP 工具生态、四档权限治理。核心贡献者，新增 15+ 模块、管理 70+ Rust crate。',
-  tags: ['Rust', 'Tauri', 'ratatui', 'Agent', 'MCP', '多模型路由', '权限治理'],
+  blurb: 'xAI Grok Build 的隐私向社区发行版（VSCodium 式 fork），我是维护者：162 次提交（全仓 200）、净增约 7.5 万行 Rust。CLI（ratatui TUI）+ Desktop（Tauri 2）双形态，多模型路由、子智能体委派、MCP 双向接入、权限审批治理。我负责的段落：包名体系迁移（62 个 xai-* → wth-*）、Desktop 内核统一、wth mcp-serve 反向暴露、跨平台打包 CI 与隐私出口门禁。v2.1.0 已发布。',
+  tags: ['Rust', 'Tauri', 'ratatui', 'Agent', 'MCP', '多模型路由', '权限治理', '开源 fork 维护'],
   overview: {
     stack: [
       ['Rust (edition 2024)', '核心语言：性能 + 内存安全，Agent 内核与工具全部用它写'],
@@ -22,12 +22,12 @@ window.DATA_AGENT = {
       ['gix / async-lsp', 'Git 操作与语言服务器协议（代码智能）'],
     ],
     numbers: [
-      ['60+', 'workspace 成员 crate（65+ 位）'],
-      ['70+', '管理的 Rust 依赖 crate'],
-      ['15+', '新增核心模块'],
+      ['162 次', '我的提交（全仓 200），净增约 7.5 万行'],
+      ['76 个', 'crate 目录（workspace members 81，依赖表 231 条）'],
+      ['32 类', '内置工具（ToolKind 共 33 个 variant，含 Other）'],
       ['3 种', '线协议后端（ChatCompletions / Responses / Messages）'],
-      ['4 档', '权限审批策略（Plan / Review / Auto / YOLO）'],
-      ['2 形态', 'CLI TUI + Desktop GUI 共享同一 Agent 内核'],
+      ['4 档', 'Desktop 审批档位 edit_mode（plan/review/auto/yolo）；内核与 TUI 是另一套 default/ask/auto/always-approve'],
+      ['2.4 万处', '测试断言 #[test]（1266 个含测试文件、324 个集成测试、9 个 bench）'],
     ],
     refs: [
       { name: 'Tauri（tauri-apps/tauri）', url: 'https://github.com/tauri-apps/tauri', why: '桌面应用框架本体，对照理解 Desktop 形态的架构' },
@@ -72,7 +72,7 @@ window.DATA_AGENT = {
       sections: [
         { h: 'Rust 三个够用的概念', body: `<ul>
 <li><b>所有权（Ownership）</b>：每个值有唯一的主人，赋值/传参默认「移动」而非拷贝，离开作用域自动释放。编译期就消灭了内存泄漏和悬垂指针——对跑几小时无人值守任务的 Agent 是刚需。</li>
-<li><b>Crate 与 Workspace</b>：crate = 编译单元（≈ 一个包）。WTH 有 60+ crate 组成 workspace，按「采样器 / 工具 / MCP / 记忆 / 配置」拆开，改一处只重编译一处。</li>
+<li><b>Crate 与 Workspace</b>：crate = 编译单元（≈ 一个包）。WTH 有 76 个 crate 目录组成 workspace（members 81），按「采样器 / 工具 / MCP / 记忆 / 配置」拆开，改一处只重编译一处。</li>
 <li><b>Trait</b>：≈ 接口。所有工具实现同一个 Tool trait，Agent 循环不关心具体是 Shell 还是 Git——多态在这里。</li></ul>` },
         { h: '双形态如何共享一个内核', body: `<ul>
 <li><b>CLI</b>：ratatui 画全屏 TUI（多面板、内置终端），走完整的 wth-agent 内核 + 全部工具</li>
@@ -278,7 +278,7 @@ pub struct SubagentRequest {
 <p>存储布局：<code>~/.grok/memory/MEMORY.md</code> + 按工作区哈希（blake3(cwd)）分目录——<b>全本地、无遥测</b>，隐私友好。</p>` },
         { h: '上下文工程的产品含义', body: `<ul>
 <li><b>分层</b>：记忆分「事实 / 偏好 / 执行历史」三层，注入时按任务相关性取</li>
-<li><b>克制</b>：控制注入量（WTH 最多注入 20 条）——省成本，更防行为漂移</li>
+<li><b>克制</b>：控制注入量（内核 memory.search.max_results 默认 6，Desktop 侧放宽到 20）——省成本，更防行为漂移</li>
 <li><b>缓存</b>：提示词缓存让重复前缀只算一次钱，长系统提示 + 固定上下文的场景能省一大截</li></ul>
 <p>行业趋势：从「提示词工程」（把指令写漂亮）到「上下文工程」（让正确的知识在正确的时刻出现），再往记忆图（Memory Graph）演进。</p>` },
       ],
@@ -298,6 +298,6 @@ pub struct SubagentRequest {
     { q: '对 4xx 认证错误的重试策略是？', opts: ['指数退避重试 15 次', '单独阈值重试 2 次', '立即失败（重试无意义）', '切换端点后无限重试'], a: 2, why: '5xx/连接错误可退避重试，429 限流单独阈值，认证/参数类 4xx 立即失败——把重试预算花在有用的地方。' },
     { q: 'MCP 解决的核心问题是？', opts: ['让模型更快生成文本', '统一 Agent 与工具/数据源的连接方式，一次集成处处可用', '模型训练加速', '替代 HTTP 协议'], a: 1, why: 'MCP 是「AI 的 USB-C」：工具方实现一次 server，所有 Agent 可用；权限也能在这一层统一收口。' },
     { q: '什么场景才值得拆分子智能体？', opts: ['任何任务都拆，多多益善', '子任务相互独立可并行、或需要上下文隔离时', '模型不够聪明时', '想节省 token 时'], a: 1, why: '任务可拆分独立才值得；强行多 Agent 会放大 token 消耗并增加失败率——「何时拆」是产品判断力。' },
-    { q: '「上下文工程」的核心思想是？', opts: ['把所有历史记录塞进提示词', '在正确时刻注入最相关的知识切片，克制注入量', '提示词越长越好', '关闭对话历史'], a: 1, why: '对抗 context rot：分层记忆 + 相关性检索 + 限量注入（WTH 最多 20 条）+ 提示词缓存控制成本。' },
+    { q: '「上下文工程」的核心思想是？', opts: ['把所有历史记录塞进提示词', '在正确时刻注入最相关的知识切片，克制注入量', '提示词越长越好', '关闭对话历史'], a: 1, why: '对抗 context rot：分层记忆 + 相关性检索 + 限量注入（内核 6 条 / Desktop 20 条）+ 提示词缓存控制成本。' },
   ],
 };

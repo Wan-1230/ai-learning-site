@@ -8,27 +8,29 @@ window.DATA_RAG = {
   path: 'D:\\1\\软件练习trae\\ai-resume-study',
   repo: 'https://github.com/Wan-1230/ai-resume',
   live: 'https://ai-interview-6rn.pages.dev',
-  blurb: '基于 RAG 的智能面试平台：知识检索 → 智能问答 → 简历诊断 → 练习。独立完成 React/TS + Node/Express 全栈并上线。',
-  tags: ['RAG', 'TF-IDF', 'SSE', 'React', 'Express', 'JWT/OAuth'],
+  blurb: '基于 RAG 的智能面试平台：检索问答 → 简历诊断 → 练习与错题本，独立完成 React/TS + Node/Express 全栈。检索层走过两代——第一代自实现 TF-IDF + 余弦相似度（main，已提交），第二代迁到 LangChain + 本地 MiniLM 向量 + Chroma（feat/langchain-rag，尚未提交）。为什么非换不可、换完付出什么代价，是这个项目最值得讲的部分。',
+  tags: ['RAG', 'TF-IDF', 'LangChain', 'Chroma', 'SSE', 'React', 'Express', 'JWT/OAuth'],
   overview: {
     stack: [
-      ['React 18 + TypeScript + Vite', '前端 SPA：页面、路由、组件化 UI'],
+      ['React 18 + TypeScript + Vite', '前端 SPA：12 条路由 / 11 个页面（含练习、错题本、导入、管理后台）'],
       ['Zustand', '轻量全局状态管理（登录态、用户信息）'],
       ['Tailwind CSS', '原子化样式，快速搭界面'],
-      ['Node.js + Express', '后端服务：API 路由、认证、RAG 管道'],
-      ['自实现 TF-IDF 内存检索', '向量存储 + 余弦相似度排序（MVP 检索器）'],
-      ['openai SDK（兼容接口）', '调用 MiMo v2.5 大模型，支持流式'],
+      ['Node.js + Express', '后端服务：30 个接口（server 9 + auth 8 + learning 8 + myquestions 5）'],
+      ['第一代：自实现 TF-IDF + 余弦相似度', 'main 分支的 MVP 检索器，vectorstore / retriever / generator 三件套'],
+      ['第二代：LangChain + 本地 Embedding + Chroma', 'rag/langchain/ 九个文件（loader→splitter→embedding→store→ScoredRetriever→LCEL 链）；Xenova/all-MiniLM-L6-v2，384 维'],
+      ['OpenAI 兼容接口调 LLM', '代码默认 mimo-v2.5，.env 实际覆盖为 agnes-3.0-flash；支持流式'],
       ['SSE（Server-Sent Events）', '流式输出，优化首字延迟 TTFT'],
       ['JWT + GitHub OAuth', '自签发 Token + 第三方登录（手写 state 防 CSRF）'],
-      ['Cloudflare Pages + Railway/Glitch', '前端 CDN 托管 + 后端云托管'],
+      ['node:sqlite 学习层', '收藏、练习会话、错题本、题目真实统计（需 Node ≥ 22.5）'],
+      ['Render / Back4App Containers', '后端：render.yaml + 根 Dockerfile（node:24-alpine）；前端 Cloudflare Pages / Vercel。免费档 15 分钟休眠'],
     ],
     numbers: [
-      ['279', '知识库文档块（文章切片 + 题目）'],
-      ['1500 字', '单块上限（chunkContent）'],
+      ['307 块', 'documents.json：277 个文章块 + 30 个题目块（另有 255 道题库题）'],
+      ['661 块', '第二代向量库 interview_knowledge（chunkSize 800 / overlap 120）'],
       ['Top-5', '每次问题召回的相关片段数'],
-      ['2000 字', '拼接进 Prompt 的上下文上限'],
-      ['7 天', 'JWT 有效期'],
-      ['10 分钟', 'OAuth state 防 CSRF 有效期'],
+      ['2000 字', '拼接进 Prompt 的上下文上限（5 条检索实占 765 字）'],
+      ['30 / 12', '后端接口数 / 前端路由数'],
+      ['0 个', '自动化测试与 CI（PRD D2 自陈；评测集仍是 P1 待办）'],
     ],
     refs: [
       { name: 'JavaGuide（Snailclimb/JavaGuide）', url: 'https://github.com/Snailclimb/JavaGuide', why: '本项目知识库语料来源，爬取 + 分块后入库' },
@@ -36,7 +38,7 @@ window.DATA_RAG = {
       { name: 'LlamaIndex（run-llama/llama_index）', url: 'https://github.com/run-llama/llama_index', why: 'RAG 框架标杆：分块、索引、检索、生成的最佳实践都在里面' },
       { name: 'LangChain（langchain-ai/langchain）', url: 'https://github.com/langchain-ai/langchain', why: 'LLM 应用开发最常用框架，看它的 retriever 抽象' },
     ],
-    flow: ['articles.json（JavaGuide 文章 URL）', 'crawl.js 爬取 + 分块（1500 字）', 'documents.json（279 块）', '启动时建 TF-IDF 索引（IDF 表）', '用户提问 → Top-5 召回', 'buildContext（2000 字）拼进 Prompt', 'MiMo v2.5 流式生成', 'SSE 逐字推给前端渲染'],
+    flow: ['articles.json（JavaGuide 文章 URL）', 'crawl.js 爬取 + 分块（1500 字）', 'documents.json（307 块）', '启动时建 TF-IDF 索引（IDF 表）', '用户提问 → Top-5 召回', 'buildContext（2000 字）拼进 Prompt', 'MiMo v2.5 流式生成', 'SSE 逐字推给前端渲染'],
   },
   modules: [
     {
@@ -52,7 +54,7 @@ window.DATA_RAG = {
         { h: 'RAG 的完整流水线（本项目实现版）', body: `<p>离线部分（数据准备）和在线部分（问答服务）两段：</p>
 <ol><li><b>爬取</b>：crawl.js 用 cheerio 抓取 JavaGuide 文章，HTML 还原为 Markdown</li>
 <li><b>分块（Chunking）</b>：每篇按段落贪心切成 ≤1500 字的片段</li>
-<li><b>入库</b>：279 个文档块存进 documents.json，启动时加载建索引</li>
+<li><b>入库</b>：307 个文档块存进 documents.json（277 文章 + 30 题目），启动时加载建索引</li>
 <li><b>检索（Retrieve）</b>：用户问题 → 向量化 → 和全库算余弦相似度 → 取 Top-5</li>
 <li><b>拼接（Augment）</b>：5 个片段按格式拼成 2000 字上下的上下文</li>
 <li><b>生成（Generate）</b>：连同样式约束的 System Prompt 一起交给 MiMo，流式生成</li></ol>
@@ -67,7 +69,7 @@ window.DATA_RAG = {
       hook: '面试被问「为什么用 RAG」时，先讲场景（题库每周变、答案要可溯源），再讲成本（无训练），最后补一句边界认知（微调适合风格固化）——这一套是标准的高分答案。',
       refs: [
         { name: 'LlamaIndex', url: 'https://github.com/run-llama/llama_index', why: '把 RAG 五步流水线做到极致的框架，看文档 5 分钟建立全局感' },
-        { name: 'JavaGuide', url: 'https://github.com/Snailclimb/JavaGuide', why: '本项目语料来源，可以对照「原始文章 → 279 个 chunk」的关系' },
+        { name: 'JavaGuide', url: 'https://github.com/Snailclimb/JavaGuide', why: '本项目语料来源，可以对照「原始文章 → 307 个 chunk」的关系' },
       ],
     },
     {
@@ -99,8 +101,8 @@ window.DATA_RAG = {
 <li><b>语义分块</b>：按标题层级 / 主题句切分，让每块是一个完整小主题。</li>
 <li><b>父子分块</b>：检索用小块（准），喂给模型时带父块（全）。LlamaIndex 叫 small-to-big。</li></ol>` },
       ],
-      pmNote: '改分块策略 = 改检索质量的第一个旋钮，而且成本为零。但要配评测集：改完跑一遍 50 个典型问题的回归，防止「修好了 A 场景、弄坏了 B 场景」。',
-      hook: '面试讲分块，报数字：1500 字上限、按段落贪心、279 块语料。然后主动说演进路径（重叠窗口 → 语义分块），体现「知道现在在哪、下一步去哪」。',
+      pmNote: '改分块策略 = 改检索质量的第一个旋钮，而且成本为零。但要配评测集：改完跑一遍 50 个典型问题的回归，防止「修好了 A 场景、弄坏了 B 场景」。这个评测集目前还不存在（无 test 脚本、无 CI），是本项目最大的欠账，面试要主动认。',
+      hook: '面试讲分块，报数字：1500 字上限、按段落贪心、307 块语料。然后主动说演进路径（重叠窗口 → 语义分块），体现「知道现在在哪、下一步去哪」。',
     },
     {
       id: 'rag-3', title: 'TF-IDF 与余弦相似度：检索的数学直觉', level: '进阶', minutes: 20,
@@ -142,7 +144,7 @@ cosineSimilarity(vec1, vec2) {
           ] },
         { h: '实现里的两个「诚实的坑」', body: `<ul>
 <li><b>没有真正的中文分词</b>：正则把连续无标点的中文整句当成一个 token。「什么是注意力机制」是一整个词。好在标题和术语（RAG、Agent）能命中，检索才基本可用——这是该方案的质量上限。</li>
-<li><b>每次查询都对全库重新向量化</b>：279 篇无所谓，百万级就要预计算 + 倒排索引 / ANN。</li></ul>
+<li><b>每次查询都对全库重新向量化</b>：307 块无所谓，百万级就要预计算 + 倒排索引 / ANN。</li></ul>
 <p>这两个坑在下一个模块的互动实验里可以亲手验证。</p>` },
       ],
       pmNote: 'TF-IDF 方案的优势是零服务、零成本、完全可控，MVP 三周就能上线；代价是检索只认「字面」，同义改写就抓瞎。什么时候升级？评测集上召回率不达标时。',
@@ -164,7 +166,7 @@ cosineSimilarity(vec1, vec2) {
 <li>看排序：版本 B 通常能把「降低幻觉的方法」这篇排到第一，版本 A 可能颗粒无收。</li>
 <li>换几个查询试试：<code>Agent 工具调用</code>、<code>蓝牙连不上相机</code>、<code>stateflow</code>（小写英文能直接命中）。</li></ol>
 <p><b>结论</b>：中文检索质量的上限，卡在分词这一步。这就是为什么生产级中文 RAG 一定用 jieba 分词或 Embedding 向量——而不是说 TF-IDF 这套思想不行。</p>` },
-        { h: '这个实验和真实系统的对应关系', body: `<p>模拟器和 vectorstore.js 的算法完全一致：IDF 由这 6 篇文档实时统计，TF 用词频占比，余弦只算公共词。区别只有语料规模（6 vs 279）。你在这里观察到的现象（分词决定召回、稀缺词决定区分度）在真实库上一比一复现。</p>` },
+        { h: '这个实验和真实系统的对应关系', body: `<p>模拟器和 vectorstore.js 的算法完全一致：IDF 由这 6 篇文档实时统计，TF 用词频占比，余弦只算公共词。区别只有语料规模（6 vs 307）。你在这里观察到的现象（分词决定召回、稀缺词决定区分度）在真实库上一比一复现。</p>` },
       ],
       pmNote: '向面试官演示「同一个查询、两种分词、两种结果」，是讲「为什么我计划升级分词/Embedding」最有说服力的方式——用证据说话，而不是背结论。',
       hook: '把「整句中文一个 token」讲成已知边界而不是 bug：MVP 阶段它够用（术语命中），升级路径明确（bigram → jieba → Embedding）。',
@@ -185,7 +187,7 @@ cosineSimilarity(vec1, vec2) {
 <li>再往上，知识之间有「依赖链」（Transformer → 注意力 → 位置编码）时上 <b>GraphRAG</b>：把实体关系建成图谱，支持多跳推理查询</li></ol>` },
       ],
       warn: { title: '诚实工程：简历写的 ChromaDB，实际是什么？', body: '<p>package.json 里确实装了 chromadb 依赖，但<b>全项目从未 import 过它</b>；chroma_db 目录里只有一个 documents.json（原始语料），没有任何向量索引文件。MVP 真正跑的是<b>自实现 TF-IDF 内存检索</b>。面试被追问时，讲成选型决策故事：早期评估过向量库并引入了依赖 → MVP 为控制部署成本与迭代速度改用自实现检索 → 向量库作为升级路径保留。<b>切勿虚构生产环境用了 ChromaDB</b>——面试官深挖必穿帮，诚实 + 决策逻辑反而是加分项。</p>' },
-      pmNote: '检索器与生成器模块化分离，让「TF-IDF → Embedding + 向量库」只需替换一个 retriever 文件。技术选型不是一次到位，而是留好演进接口。',
+      pmNote: '检索器与生成器模块化分离，让「TF-IDF → Embedding + 向量库」只需替换一个 retriever 文件。技术选型不是一次到位，而是留好演进接口。这条路线已经真走过一遍：feat/langchain-rag 分支删掉 vectorstore / retriever / generator 三件套，换成 rag/langchain/ 九个文件（本地 MiniLM 384 维 + Chroma，语料从 307 块重切成 661 块）。代价也要如实讲：分支至今未提交、聊天页仍在调非流式接口、评测集依然不存在——「架构换完了但没验收」本身就是值得复盘的一课。',
       hook: '面试问「文档量从 300 涨到 100 万怎么演进」：TF-IDF → Embedding + 向量库 → 混合检索 + 重排 → 必要时 GraphRAG，每一步都先过评测集回归。这条演进链要能脱稿讲。',
       refs: [
         { name: 'Chroma（chroma-core/chroma）', url: 'https://github.com/chroma-core/chroma', why: '读 README 就能理解向量数据库的接口长什么样（add/query）' },
@@ -282,8 +284,8 @@ while (true) {
     },
     {
       id: 'rag-8', title: '认证、安全与部署上线', level: '进阶', minutes: 15,
-      keywords: 'JWT OAuth bcrypt state CSRF 原子写 Cloudflare Pages Railway Glitch',
-      summary: '独立产品的最后一公里：邮箱 + GitHub OAuth 双登录（JWT 鉴权）、用户数据文件的安全落盘、以及三次部署迁移的完整故事（Vercel+Railway → Cloudflare Pages+Railway → Glitch）。',
+      keywords: 'JWT OAuth bcrypt state CSRF 原子写 Cloudflare Pages Railway Render Back4App',
+      summary: '独立产品的最后一公里：邮箱 + GitHub OAuth 双登录（JWT 鉴权）、用户数据文件的安全落盘、以及部署迁移的完整故事（Vercel+Railway → Cloudflare Pages+Railway → Render，最新在试 Back4App Containers）。',
       sections: [
         { h: 'JWT：自己签发的通行证', body: `<ul>
 <li>登录成功 → <code>jwt.sign(payload, secret, { expiresIn: '7d' })</code> 签发 Token</li>
@@ -298,11 +300,11 @@ while (true) {
         { h: '部署三次迁移的故事', body: `<ol>
 <li><b>Vercel + Railway</b>：标准海外组合，vercel.json 配 SPA rewrites 兜底路由</li>
 <li><b>Cloudflare Pages + Railway</b>：国内免备案、CDN 更快——线上 ai-interview-6rn.pages.dev 就是这套</li>
-<li><b>Glitch</b>：免费 + 文件持久化（users.json 重启不丢）+ SSE 可用；代价是限流与休眠</li></ol>
+<li><b>Render</b>：render.yaml 声明式部署，免费档 15 分钟休眠（冷启动第一个请求会等）；users.json 落盘 + SSE 可用。最新一次提交又加了根 Dockerfile，改走 Back4App Containers 从 GitHub 构建</li></ol>
 <p>前端还有个降级设计：后端挂了时，题库自动回退加载 Pages 同源的静态 questions.json——纯静态模式下练习模式依然可用。</p>` },
       ],
       pmNote: '部署选型的决策变量是：成本（免费额度）、国内可达性（备案/CDN）、能力约束（SSE 能不能跑、文件存不存得下）。每一次迁移都是一次「约束变了 → 方案跟着变」的产品决策。',
-      hook: '面试问「你上线遇到过什么问题」，用 Glitch 迁移答：Railway 免费额度收紧 → 评估了 Cloudflare Workers（发现带 fs 的长驻 Express 跑不了）→ 选 Glitch（文件持久化 + SSE）——展示真实的取舍过程。',
+      hook: '面试问「你上线遇到过什么问题」，用迁移链答：Railway 免费额度收紧 → 评估过 Cloudflare Workers（带 fs 的长驻 Express 跑不了）→ 选 Render（声明式 + 能跑常驻进程）→ 再加 Dockerfile 试 Back4App。注意仓库里查不到 Glitch 与 pages.dev 的配置痕迹，别把历史当现状讲。',
       refs: [
         { name: 'Express', url: 'https://github.com/expressjs/express', why: '后端框架本体，读官方 guide 理解中间件模型' },
         { name: 'Zustand', url: 'https://github.com/pmndrs/zustand', why: '前端全局状态库，几行代码管理登录态' },
