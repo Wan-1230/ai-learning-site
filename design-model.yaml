@@ -1,0 +1,154 @@
+# design-model.yaml — 本项目**已建成**的设计系统（由 document 从真实代码抽取，非愿望清单）
+# 抽取自：assets/style.css (904 行) + assets/app.js (1555 行) + index.html
+# 抽取日期：2026-10-21 · 规则：记录现实，不记录理想；违反自身系统处见文末 drift
+
+meta:
+  name: ai-learning-site
+  industry: 中文技术学习手册 / 面试备考工具
+  register: product            # 页面是用来读的，不是用来惊艳的（design SERVES the product）
+  sub_register: pages-you-read # product-ui.md 的分支，非 workflow-ui / ai-console
+  persona: Editorial publication（中文技术讲义 · 红笔批注的纸面手册）
+  soul_source: assets/style.css:3-7 作者自述，非推断
+  design_read: "中文技术讲义 · 纸面批注 · register=product · SPECTACLE=2 · DENSITY=7 · 无视觉引擎"
+
+dials:
+  soul: 8          # 身份极明确：纸面 + 红笔 + 衬线标题，一眼认得出不是模板站
+  spectacle: 2     # 实测无任何 canvas/three/webgl/gsap；只有 CSS fade 与 stagger
+  density: 7       # 长文讲义 + 13 类页面 + 折叠问答 + 翻转卡，信息密度偏高
+
+# ── PRIMITIVES（全部为代码实际值）──
+color:
+  bg:        "#f5f0e8"   # 纸面
+  bg2:       "#efe9dd"
+  surface:   "#fdfaf3"   # --panel 卡片/浮层底
+  surface2:  "#f0ebdf"   # --panel2
+  surface3:  "#e7e0d2"   # --panel3
+  ink:       "#221d16"   # 主文字
+  ink-strong: "#3a342a"  # --tx-strong 正文强调
+  ink-mid:   "#4a4436"   # --tx-mid
+  muted:     "#57503f"   # --tx2
+  dim:       "#8a8271"   # --tx3 元信息
+  accent:    "#b4451f"   # 批注铁锈红 —— 全站唯一强调色（作者明文规定）
+  accent-deep: "#8f3616"
+  accent-dim: "rgba(180,69,31,.09)"
+  semantic_pens:               # 不是装饰色，是「哪个项目」的编码，跨页一致
+    rag:   "#0c7d6f"
+    agent: "#a16207"
+    nlink: "#1e5fbb"
+    gen:   "#6d28d9"
+  state: { warn: "#b3261e", ok: "#2f6b3a" }
+  border:      "rgba(48,38,22,.12)"   # 发丝线，非硬灰线 ✓
+  border-2:    "rgba(48,38,22,.22)"
+  hairline:    "#b8ad9c"
+  inverted-ink: "#fdf6ef"             # 深色底上的字
+  code-bg:     "#2b2620"              # 代码块底（唯一的深色面）
+  strategy: committed            # 一个强调色 owns 全站；四支笔色承担语义而非装饰
+
+type:
+  display: "Noto Serif SC"     # 衬线标题 —— 讲义感的来源，非 reflex 选择
+  display_fallback: "'Source Han Serif SC','SimSun',Georgia,serif"
+  body: "'Segoe UI','Microsoft YaHei',system-ui"
+  mono: "'JetBrains Mono','Cascadia Code',Consolas"
+  body_leading: 1.85           # 中文长文阅读的必要值
+  scale_tokens: [10, 11, 12.5, 13.5, 15, 17, 19, 22, 25, 31, 36]   # --fs-3xs … --fs-4xl
+  scale_ratio: 1.15            # ← 低于 preflight 要求的 ≥1.25，见 drift
+  display_tracking: null       # 未设负字距（衬线中文标题本就不该套拉丁文的 -.03em）
+  display_leading: null
+
+substrate:
+  grain: true
+  grain_opacity: 0.028         # body::before，feTurbulence baseFrequency .75 / numOctaves 4
+  grain_fixed: true            # position:fixed inset:0 z-index:1，静态不呼吸
+  vignette: false              # 无（浅色纸面本不需要）
+  radius_scale: [3, 5, 9, 13, 999]   # 4 档 + 胶囊，非"one radius locked"
+  motion_easing: "cubic-bezier(.16,1,.3,1)"
+  motion_easings_extra: ["cubic-bezier(.7,0,.84,0)", "cubic-bezier(.34,1.56,.64,1)", "linear(0,.32 8%,…)"]
+  motion_durations: { fast: 150, base: 320, med: 250, reveal: 520, enter: 520 }
+  shadows: ["0 1px 2px rgba(58,42,18,.05)", "0 4px 14px rgba(58,42,18,.12)", "0 10px 30px rgba(58,42,18,.16)"]  # 全部染墨色 ✓ 无中性灰阴影
+  theme: light-only            # color-scheme:light，单主题锁定（作者明文）
+
+hero_engine:
+  type: none                   # product register 不需要；不是缺陷
+  motion_layer: ".fade-in（路由进入）+ .stagger>*（列表逐条淡入上移 26px）+ qaFlash（搜索命中高亮 1.8s）+ lbIn（灯箱 scale .97→1）"
+  reduced_motion: "三处 @media(prefers-reduced-motion:reduce)：L48 全局、L442 .stagger 关动画、L774 动效层"
+  scroll_driven: false
+  js_animation: false          # 无 rAF 循环、无 GSAP
+
+structure:
+  shell: "左侧固定栏（项目分组手风琴）+ 右侧内容列（max-width 1040–1080）"
+  views:                       # 13 类页面，全部同一 shell
+    - home            # 学习总览：hero + stat-strip + 总目录 + 学习路径 + 4 个专项入口 + 开源地图
+    - proj            # 项目概览：chips + lead + 技术栈表 + 关键数字 tiles + 全景流程 + 参考
+    - module          # 课程正文：讲义（h2/h3/p/ul/pre/code）+ 本页目录悬浮面板
+    - quiz            # 实战测验：单选 + correct/wrong 态 + 得分
+    - interview       # 面试实战：自我介绍双版 + 数字弹药翻转卡 + 策略 + 热词 + 折叠问答
+    - glossary        # 术语速查表
+    - aipm / aipmModule
+    - interv / intervModule   # 34 模块速通
+    - guide           # Agent 项目实战讲法长文
+    - docIndex / docModule    # 速通系列 7 份文档
+  layout_families: [sidebar-shell, stat-tile-grid, hairline-table, flow-chain, flip-card-grid, accordion-list, term-card-grid, longform-prose]   # 8 个，够
+  nav: "单列侧栏 · 当前项红笔痕标记 · 分组可折叠 · 按 / 唤起全站搜索"
+
+# ── DRIFT：代码违反自身系统之处（document 只记录，不修；修是 redesign 的事）──
+drift:
+  - id: D1
+    severity: P0
+    what: "三个 token 自引用，值永远不生效"
+    where: "assets/style.css:831-833 (--hover-bg / --ok-line / --ok-bg 定义为 var(自己))"
+    breaks: 9                  # 下列规则静默失效
+    victims:
+      - ".nav-proj-head:hover (L90) 侧栏分组头悬停无反馈"
+      - ".nav-item:hover (L104) 侧栏条目悬停无底纹"
+      - ".quiz-item:has(.opt.correct) (L300) 答对项描边丢失"
+      - ".opt.correct (L311) 答对项**绿色底纹丢失** ← 测验答对了看不出来"
+      - ".qa.done-learn (L347) 已掌握问答卡描边丢失"
+      - ".master-btn.on (L365) 已打卡按钮描边丢失"
+      - ".demo-btn.ok:hover (L398) / .bo.ok (L429)"
+    origin: "commit d03fd5a「设计系统统一：全部令牌化」把原本的内联值搬进 token 时，三个值没搬完"
+  - id: D2
+    severity: P2
+    what: "纯 #fff 令牌化"
+    where: "assets/style.css:830 (--white:#fff，用于图片底/代码块内底)"
+    note: "作者自己的规则第 5 行写着「无渐变、无 emoji、无编号堆砌、无左侧色条」，纯白是唯一漏网的未染色中性"
+  - id: D3
+    severity: P1
+    what: "两处「卡片左边一条彩色竖条」"
+    where: "assets/style.css:648 (border-left:2px solid var(--line2)) / :898 (.g-quote border-left:3px solid var(--acc))"
+    note: "L648 是 2px 中性线，属目录树引导线，语义成立；L898 是 3px 强调色竖条，命中黑名单"
+  - id: D4
+    severity: P2
+    what: "17 处 transition:all —— 会连布局属性一起动"
+    where: "L113,126,192,205,213,307,363,377 等"
+  - id: D5
+    severity: P2
+    what: "字号阶梯比例 1.15，低于 preflight 的 ≥1.25"
+    where: "scale_tokens 15→17→19→22→25→31→36"
+    cost: "相邻两级差 2px，扫读时分不出「小节标题」和「卡片标题」，长文页尤其明显"
+  - id: D6
+    severity: P2
+    what: "无 finesse 构建戳，下次跑没有可轮换的记录"
+    where: "assets/style.css:1"
+  - id: non-findings
+    note: "以下经核查**不是**缺陷，别误修：① 中文破折号「——」是正常标点，不是英文 em-dash 那个 AI tell；② 无 hero engine 对 product register 是正确的；③ 暖纸色接近 reflex-reject 的 beige+brass 车道，但此处是作者明文论证过的「讲义纸面」隐喻且强调色是铁锈红非黄铜，属 earned 不属 default；④ 圆角 4 档不是漂移，各有语义（3 徽标/5 小卡/9 面板/13 浮层/999 胶囊）；⑤ L658 .toc-link 的 border-left:2px 是目录树的引导线（中性 --line2），不是彩色强调竖条，检测器机械命中但语义成立"
+
+# ── 2026-10-21 redesign 已修（全部经真渲染复测，非声称）──
+resolved:
+  - { id: D1, fix: "三个自引用 token 给真实值；.opt.correct / .master-btn.on 的重复硬编码收口到 token",
+      verified: "点选项后 .opt.correct 计算值 = rgba(47,107,58,0.1)（原来与答错同为纸色）；.nav-item:hover = rgba(48,38,22,0.055)" }
+  - { id: D-overflow, fix: ".stack-table 加 table-layout:fixed + max-width:100%，td 加 overflow-wrap:anywhere + min-width:0",
+      verified: "375px 下 #/p/rag 的 scrollWidth 415→375；390px 触屏同样 390/390" }
+  - { id: D-contrast, fix: "--tx3 8a8271→746c5b（3.36→4.58）；--rag 0c7d6f→0a7b6d（4.43→4.55）；--agent a16207→9d5e03（4.34→4.59），并同步 data-rag/data-agent 的 colorHex 与 app.js osMap、data-docs 的文档色副本",
+      verified: "重算比值全部 ≥4.5" }
+  - { id: D3, fix: ".g-quote 去掉 3px 铁锈红左竖条，改为上下发丝线 + 左侧竖排「批注」衬线小标",
+      verified: "计算值 borderLeftWidth=0px，::before content=\"批注\" writing-mode=vertical-rl color=rgb(180,69,31)" }
+  - { id: D-touch, fix: "@media(pointer:coarse) 下侧栏行 min-height:44px（桌面密度不动）",
+      verified: "390px 触屏 .nav-item 实测高度 44px" }
+  - { id: D4, fix: "17 处 transition:all 收进 --tr-fast/--tr-med 具名属性令牌（只动 background/color/border-color/opacity/box-shadow/transform）",
+      verified: "grep 剩余 transition:all = 0（检测器报的 2 处是我写的注释文本）" }
+  - { id: D2, fix: "--white #fff → #fffdf8" }
+  - { id: D6, fix: "CSS 首行加 finesse 构建戳；.finesse/log.json 已写并加入 .gitignore（按 divergence §4.1：日志不入库，戳入库）" }
+open:
+  - { id: D5, what: "字号阶梯比例 1.15 < preflight 的 ≥1.25",
+      why_not_fixed: "改阶梯会牵动全部 13 类页面的节奏与既有版式（hero-title 36px、tiles、表格行高都在用相邻两级），属于需要你先拍板的取舍，不在本轮最小修复范围内" }
+

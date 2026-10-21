@@ -4,7 +4,7 @@ window.DATA_RAG = {
   name: 'AI 面试宝典',
   en: 'RAG Interview Platform',
   color: 'var(--rag)',
-  colorHex: '#0c7d6f',
+  colorHex: '#0a7b6d',
   path: 'D:\\1\\软件练习trae\\ai-resume-study',
   repo: 'https://github.com/Wan-1230/ai-resume',
   live: 'https://ai-interview-6rn.pages.dev',

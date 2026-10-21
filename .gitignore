@@ -6,3 +6,6 @@
 *.log
 .DS_Store
 Thumbs.db
+
+# finesse 本地构建历史（不入库，见 divergence §4.1）
+.finesse/

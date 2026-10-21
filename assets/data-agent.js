@@ -4,7 +4,7 @@ window.DATA_AGENT = {
   name: 'Wide Thought Host',
   en: 'Open-source AI Coding Agent',
   color: 'var(--agent)',
-  colorHex: '#a16207',
+  colorHex: '#9d5e03',
   path: 'D:\\gork\\wth',
   repo: 'https://github.com/Wan-1230/Wide-Thought-Host',
   live: '',

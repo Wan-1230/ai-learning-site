@@ -353,8 +353,8 @@ function renderHome(main) {
   }).join('');
 
   const osMap = [
-    { c: '#0c7d6f', t: '大模型应用（RAG）', items: [['run-llama/llama_index', 'RAG 框架标杆'], ['langchain-ai/langchain', 'LLM 应用全家桶'], ['chroma-core/chroma', '向量数据库'], ['Snailclimb/JavaGuide', '本项目语料来源']] },
-    { c: '#a16207', t: 'Agent 与工具生态', items: [['All-Hands-AI/OpenHands', '开源自主 Agent'], ['Aider-AI/aider', 'AI 结对编程 CLI'], ['modelcontextprotocol/servers', 'MCP 官方服务'], ['asg017/sqlite-vec', 'SQLite 向量检索']] },
+    { c: '#0a7b6d', t: '大模型应用（RAG）', items: [['run-llama/llama_index', 'RAG 框架标杆'], ['langchain-ai/langchain', 'LLM 应用全家桶'], ['chroma-core/chroma', '向量数据库'], ['Snailclimb/JavaGuide', '本项目语料来源']] },
+    { c: '#9d5e03', t: 'Agent 与工具生态', items: [['All-Hands-AI/OpenHands', '开源自主 Agent'], ['Aider-AI/aider', 'AI 结对编程 CLI'], ['modelcontextprotocol/servers', 'MCP 官方服务'], ['asg017/sqlite-vec', 'SQLite 向量检索']] },
     { c: '#1e5fbb', t: '安卓与硬件', items: [['android/nowinandroid', '官方 MVVM 范例'], ['NordicSemiconductor/Android-BLE-Library', 'BLE 封装'], ['gphoto/libgphoto2', '开源 PTP 实现'], ['developer.android.com', '官方文档']] },
   ].map(g => '<div class="os-card" style="--accent:' + g.c + '"><h3>' + g.t + '</h3><ul>' +
     g.items.map(i => '<li><code>' + i[0] + '</code> — ' + i[1] + '</li>').join('') + '</ul></div>').join('');
