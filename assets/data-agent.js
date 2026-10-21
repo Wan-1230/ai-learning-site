@@ -212,17 +212,28 @@ pub fn needs_approval(tool_name: &str, arguments: &Value, edit_mode: &str) -> bo
     },
     {
       id: 'agent-6', title: 'MCP：AI 应用的 USB-C', level: '进阶', minutes: 15,
-      keywords: 'mcp 协议 stdio initialize tools/list tools/call 生态',
-      summary: 'MCP（Model Context Protocol）是 Anthropic 提出的开放协议，统一 Agent 与外部工具/数据源的连接方式——像 USB-C：一次集成，处处可用。到 2026 年它已基本赢得 Agent-to-Tool 层（月下载近亿、公共服务器超 1 万，各大厂商原生支持）。',
+      keywords: 'mcp 协议 stdio 无状态 server/discover 2026-07-28 tools/list tools/call 生态',
+      summary: 'MCP（Model Context Protocol）是 Anthropic 提出的开放协议，统一 Agent 与外部工具/数据源的连接方式——像 USB-C：一次集成，处处可用。到 2026 年它已基本赢得 Agent-to-Tool 层（月度 SDK 下载约 5 亿、去重后约 1.2 万个服务器，各大厂商原生支持）。注意协议刚换代：2026-07-28 修订把信令改成无状态、删掉了 initialize 握手——WTH 用的是 2025-11-25 及更早那套，面试要先说版本。',
       sections: [
         { h: '没有 MCP 的世界 vs 有 MCP 的世界', body: `<ul>
 <li><b>没有</b>：接 GitHub 要写连接器、接数据库再写一个、每个 Agent 应用重复造轮子；权限逻辑散落各处</li>
 <li><b>有</b>：工具方实现一次 MCP server，所有支持 MCP 的 Agent 直接用；Agent 方实现一次 client，全生态工具即插即用；权限在 MCP 层统一收口</li></ul>
 <p>和 A2A（Agent2Agent，谷歌捐给 Linux 基金会）的关系：MCP 管「Agent ↔ 工具」，A2A 管「Agent ↔ Agent」，互补不竞争。</p>` },
-        { h: 'WTH 桌面端的 MCP 客户端（手写精简版）', body: `<p>协议交互四步：启动服务器进程 → initialize 握手（10s 超时）→ tools/list 拿工具清单并入请求 → tools/call 执行（60s 超时）。CLI 完整版则用 rmcp SDK，支持 HTTP SSE + 子进程两种传输、OAuth 登录、SSE 断线退避重连。</p>
+        { h: 'WTH 桌面端的 MCP 客户端（2025-11-25 版规范）', body: `<p>先标版本：这套是 2025-11-25 及更早的规范，2026-07-28 起握手已被删除（见下一节）。协议交互四步：启动服务器进程 → initialize 握手（10s 超时）→ tools/list 拿工具清单并入请求 → tools/call 执行（60s 超时）。CLI 完整版则用 rmcp SDK，支持 HTTP SSE + 子进程两种传输、OAuth 登录、SSE 断线退避重连。</p>
 <p>值得学的工程细节：<b>任何一步失败自动降级跳过</b>——MCP 服务器挂了不能拖死整个 Agent，只是少了几个工具。</p>` },
+        { h: '协议换代：2026-07-28 起 MCP 转无状态', body: `
+<p><b>这是 MCP 自发布以来最大的一次修订，且是破坏性变更</b>，旧客户端和服务端都得跟着改：</p>
+<ul>
+<li><b>握手没了</b>：initialize / notifications/initialized 被删除。协议版本与客户端能力改由每个请求的 _meta 携带（io.modelcontextprotocol/protocolVersion、clientCapabilities），对不上就返回 UnsupportedProtocolVersionError。</li>
+<li><b>会话没了</b>：Mcp-Session-Id 头被移除；tools/list、resources/list、prompts/list 不再随连接不同而返回不同结果。需要跨调用保存状态的服务器，自己签发显式句柄，当普通工具参数传给客户端。</li>
+<li><b>新增 server/discover</b>：服务器必须实现，一次性公布支持的协议版本、能力、身份，以及 ttlMs / cacheScope 缓存字段。</li>
+<li><b>网关更省事</b>：新增 Mcp-Method / Mcp-Name 请求头，负载均衡不解 JSON 就能路由；头与体不一致时服务器必须拒绝。</li>
+<li><b>弃用清单</b>：Roots、Sampling、Logging 与 HTTP+SSE 传输进入 12 个月弃用期；服务端不再能主动发 JSON-RPC 请求，需要用户输入时走 Multi Round-Trip Requests（server 返回 inputRequired，client 收集后用新 request ID 重试）。</li>
+<li><b>SDK 同步换代</b>：Tier 1 SDK 发 v2 beta——Python v2.0.0b2、TypeScript v2（拆成 server/client 包、ESM-only）、Go v1.7.0-pre.1、C# v2.0.0-preview.1。</li>
+</ul>
+<p><b>面试怎么讲</b>：先说「MCP 在 2026-07-28 从有状态转向无状态」，再讲为什么——无状态后任意实例能处理任意请求，网关路由、水平扩容、断线重连都不用粘会话。然后诚实交代：WTH 落在 2025-11-25 及更早的规范上，rmcp 2.1 还没跟到 v2，这是待办不是已完成。</p>` },
       ],
-      pmNote: 'MCP 之于 Agent 生态 = USB-C 之于外设：网络效应一旦形成，不支持 MCP 的工具生态会被边缘化。做 AI 产品时「要不要支持 MCP」在 2026 年已不是问题，问题是什么时候。',
+      pmNote: 'MCP 之于 Agent 生态 = USB-C 之于外设：网络效应一旦形成，不支持 MCP 的工具生态会被边缘化。做 AI 产品时「要不要支持 MCP」在 2026 年已不是问题；2026-07-28 换代之后，第二个问题变成「什么时候跟到无状态规范」——旧握手还能跑，但网关与水平扩容会先撞墙。',
       hook: '面试答「MCP 是什么」用 30 秒结构：一句话定义（AI 的 USB-C）→ 一句机制（server 暴露工具、client 发现并调用）→ 一句数据（月下载近亿、服务器超 1 万）→ 一句落地（WTH 用 MCP 扩展工具生态并统一走权限审批）。',
       refs: [
         { name: 'MCP 官网', url: 'https://modelcontextprotocol.io/', why: '协议规范 + 快速上手，理解 resources/tools/prompts 三原语' },
